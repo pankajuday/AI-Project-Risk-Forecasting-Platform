@@ -1,0 +1,26 @@
+# EditorConfig: https://editorconfig.org
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Python formatting rules (PEP 8: 4 spaces per indentation level)
+[*.py]
+indent_style = space
+indent_size = 4
+
+# Frontend, Config & Markup files (2 spaces)
+[*.{js,jsx,ts,tsx,json,yml,yaml,css,html,md}]
+indent_style = space
+indent_size = 2
+
+# Shell scripts
+[*.sh]
+end_of_line = lf
+
+# Dockerfile & Makefiles
+[Makefile]
+indent_style = tab

@@ -1,0 +1,72 @@
+# ==========================================
+# Environment & Secret Files
+# ==========================================
+.env
+.env.*
+!.env.example
+!.env.template
+*.env
+backend/.env
+frontend/.env
+*.pem
+*.key
+
+# ==========================================
+# Python & Virtual Environments
+# ==========================================
+**/__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+venv/
+ENV/
+env/
+**/.venv/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# ==========================================
+# Node.js & Frontend Build Artifacts
+# ==========================================
+node_modules/
+**/node_modules/
+dist/
+dist-ssr/
+frontend/dist/
+frontend/dist-ssr/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ==========================================
+# Databases & Local Upload Storage
+# ==========================================
+*.db
+*.sqlite
+*.sqlite3
+backend/app/uploads/*
+!backend/app/uploads/.gitkeep
+uploads/
+DOCx/
+DOCUMENTS/
+chroma_db/
+.chroma/
+
+# ==========================================
+# IDEs & System Files
+# ==========================================
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json
+!.vscode/launch.json
+# .idea/
+# *.swp
+# *.swo
+*~
+.DS_Store
+Thumbs.db
