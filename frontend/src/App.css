@@ -1,0 +1,216 @@
+.docx-wrapper {
+  background: #f5f5f5;
+  padding: 20px;
+}
+
+.docx-wrapper section.docx {
+  margin: 20px auto;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+.pdf-report {
+  background: #ffffff;
+  color: #111827;
+}
+
+.pdf-report h1,
+.pdf-report h2,
+.pdf-report h3 {
+  color: #111827;
+}
+
+.pdf-report table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.pdf-report th {
+  background: #f3f4f6;
+  color: #111827;
+  border: 1px solid #d1d5db;
+}
+
+.pdf-report td {
+  color: #374151;
+  border: 1px solid #d1d5db;
+}
+
+.pdf-document {
+  width: 794px;
+  background: #ffffff;
+  color: #1f2937;
+  box-sizing: border-box;
+}
+
+/* Never cut these elements between pages */
+.pdf-document h1,
+.pdf-document h2,
+.pdf-document h3,
+.pdf-document h4,
+.pdf-document p,
+.pdf-document li,
+.pdf-document blockquote,
+.pdf-document pre,
+.pdf-document tr {
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+
+/* Keep headings with the content below them */
+.pdf-document h1,
+.pdf-document h2,
+.pdf-document h3,
+.pdf-document h4 {
+  page-break-after: avoid !important;
+  break-after: avoid !important;
+}
+
+/* Tables */
+.pdf-document table {
+  width: 100%;
+  border-collapse: collapse;
+  page-break-inside: auto;
+}
+
+.pdf-document thead {
+  display: table-header-group;
+}
+
+.pdf-document tr {
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+
+/* Prevent text from overflowing horizontally */
+.pdf-document td,
+.pdf-document th {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+/* Code */
+.pdf-document pre {
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Images */
+.pdf-document img {
+  max-width: 100%;
+  height: auto;
+  page-break-inside: avoid;
+}
+
+/* Fix line-height clipping issues */
+.markdown-pdf-container p,
+.markdown-pdf-container li {
+  line-height: 1.5;
+  margin-bottom: 1em;
+}
+
+/* Ensure code blocks don't get chopped in half */
+.markdown-pdf-container pre,
+.markdown-pdf-container blockquote {
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+
+/* Handle tables correctly */
+.markdown-pdf-container tr {
+  page-break-inside: avoid !important;
+  break-inside: avoid !important;
+}
+
+/* Excel outer content */
+
+.excel-viewer {
+  width: max-content;
+  min-width: 100%;
+  background: #ffffff;
+  color: #111827;
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 14px;
+}
+
+/* Excel table */
+
+.excel-viewer table {
+  border-collapse: collapse;
+  border-spacing: 0;
+
+  width: max-content;
+
+  background: #ffffff;
+  color: #111827;
+
+  table-layout: auto;
+}
+
+/* Cells */
+
+.excel-viewer th,
+.excel-viewer td {
+  border: 1px solid #d1d5db;
+
+  padding: 6px 10px;
+
+  min-width: 80px;
+
+  height: 30px;
+
+  white-space: nowrap;
+
+  text-align: left;
+  vertical-align: middle;
+
+  background: #ffffff;
+  color: #111827;
+}
+
+/* Header */
+
+.excel-viewer th {
+  position: sticky;
+  top: 0;
+
+  z-index: 5;
+
+  background: #f3f4f6;
+  color: #111827;
+
+  font-weight: 600;
+}
+
+/* Row hover */
+
+.excel-viewer tbody tr:hover td {
+  background: #f8fafc;
+}
+
+/* First column */
+
+.excel-viewer th:first-child,
+.excel-viewer td:first-child {
+  min-width: 60px;
+}
+
+/* Scrollbar */
+
+.excel-viewer::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.excel-viewer::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.excel-viewer::-webkit-scrollbar-thumb {
+  background: #c5c5c5;
+  border-radius: 5px;
+}
+
+.excel-viewer::-webkit-scrollbar-thumb:hover {
+  background: #999;
+}

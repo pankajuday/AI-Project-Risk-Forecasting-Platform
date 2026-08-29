@@ -1,0 +1,65 @@
+services:
+  backend:
+    build:
+      context: ../backend
+      dockerfile: ../docker/backend.Dockerfile
+    env_file:
+      - ../backend/.env
+    container_name: backend
+    restart: unless-stopped
+    networks:
+      - rag-network
+    depends_on:
+      - mongodb
+      - qdrant
+
+  frontend:
+    build:
+      context: ../frontend
+      dockerfile: ../docker/frontend.Dockerfile
+    env_file:
+      - ../frontend/.env
+    container_name: frontend
+    restart: unless-stopped
+    networks:
+      - rag-network
+    depends_on:
+      - backend
+    
+      
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    # ports:
+    #   - "27017:27017" # Uncomment to expose MongoDB on the host for local debugging.
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - rag-network
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    restart: unless-stopped
+
+    # ports:
+    #   - "6333:6333"
+    #   - "6334:6334" # Optional: expose Qdrant ports for local debugging or direct API access.
+
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+    networks:
+      - rag-network
+
+
+
+networks:
+  rag-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
+  qdrant-data:
