@@ -12,6 +12,7 @@ services:
     depends_on:
       - mongodb
       - qdrant
+    
 
   frontend:
     build:
@@ -23,6 +24,8 @@ services:
     restart: unless-stopped
     networks:
       - rag-network
+    ports:
+      - "5173:5173"
     depends_on:
       - backend
     
@@ -49,7 +52,7 @@ services:
     #   - "6334:6334" # Optional: expose Qdrant ports for local debugging or direct API access.
 
     volumes:
-      - qdrant_data:/qdrant/storage
+      - qdrant-data:/qdrant/storage
 
     networks:
       - rag-network
