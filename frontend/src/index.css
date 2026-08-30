@@ -9,8 +9,47 @@
     'Courier New', monospace;
 }
 
-/*  CSS Custom Properties  */
+/* Light Mode Variables (Default) */
 :root {
+  /* Colors */
+  --bg-base: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-elevated: #f1f5f9;
+  --bg-overlay: #e2e8f0;
+
+  --border: rgba(0, 0, 0, 0.08);
+  --border-glow: rgba(99, 102, 241, 0.4);
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+
+  /* Accent — Indigo/Violet */
+  --accent: #4f46e5;
+  --accent-soft: rgba(99, 102, 241, 0.12);
+  --accent-glow: rgba(99, 102, 241, 0.25);
+
+  /* Status colors */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #3b82f6;
+
+  /* Risk severity */
+  --risk-critical: #ef4444;
+  --risk-high: #ea580c;
+  --risk-medium: #d97706;
+  --risk-low: #16a34a;
+
+  /* Shadows */
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 8px 48px rgba(0, 0, 0, 0.12);
+  --glow-accent: 0 0 24px rgba(99, 102, 241, 0.15);
+}
+
+/* Dark Mode Overrides (Triggered when .dark class is added to <html>) */
+html.dark {
   /* Colors */
   --bg-base: #080810;
   --bg-surface: #0f0f1a;
@@ -72,6 +111,7 @@ body {
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
   overflow-y: auto;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 /*  Scrollbar  */
@@ -87,7 +127,7 @@ body {
   border-radius: 99px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(150, 150, 150, 0.3);
 }
 
 /*  Typography  */
@@ -118,7 +158,8 @@ pre,
   padding: 20px;
   transition:
     border-color 0.2s,
-    box-shadow 0.2s;
+    box-shadow 0.2s,
+    background-color 0.25s ease;
 }
 .card:hover {
   border-color: var(--border-glow);
@@ -130,7 +171,7 @@ pre,
 
 /*  Glass  */
 .glass {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-surface);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -159,7 +200,7 @@ pre,
   box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
 }
 .btn-primary:hover {
-  background: #151536;
+  opacity: 0.9;
   box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
   transform: translateY(-1px);
 }
@@ -175,7 +216,7 @@ pre,
 .btn-ghost:hover {
   background: var(--bg-elevated);
   color: var(--text-primary);
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: var(--border-glow);
 }
 
 .btn-danger {
@@ -230,31 +271,34 @@ pre,
 }
 .badge-indigo {
   background: var(--accent-soft);
-  color: #a5b4fc;
+  color: #6366f1;
   border: 1px solid rgba(99, 102, 241, 0.3);
+}
+html.dark .badge-indigo {
+  color: #a5b4fc;
 }
 .badge-green {
   background: rgba(16, 185, 129, 0.1);
-  color: #34d399;
+  color: var(--risk-low);
   border: 1px solid rgba(16, 185, 129, 0.25);
 }
 .badge-yellow {
   background: rgba(234, 179, 8, 0.1);
-  color: #fbbf24;
+  color: var(--risk-medium);
   border: 1px solid rgba(234, 179, 8, 0.25);
 }
 .badge-red {
   background: rgba(239, 68, 68, 0.1);
-  color: #f87171;
+  color: var(--risk-critical);
   border: 1px solid rgba(239, 68, 68, 0.25);
 }
 .badge-orange {
   background: rgba(249, 115, 22, 0.1);
-  color: #fb923c;
+  color: var(--risk-high);
   border: 1px solid rgba(249, 115, 22, 0.25);
 }
 .badge-muted {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-overlay);
   color: var(--text-secondary);
   border: 1px solid var(--border);
 }
@@ -302,15 +346,6 @@ pre,
 @keyframes spin {
   to {
     transform: rotate(360deg);
-  }
-}
-@keyframes pulse-glow {
-  0%,
-  100% {
-    box-shadow: 0 0 8px rgba(99, 102, 241, 0.3);
-  }
-  50% {
-    box-shadow: 0 0 20px rgba(99, 102, 241, 0.6);
   }
 }
 
@@ -372,7 +407,7 @@ pre,
   padding: 2px 6px;
   border-radius: 5px;
   font-size: 12.5px;
-  color: #a5b4fc;
+  color: var(--accent);
 }
 .markdown-body pre {
   background: var(--bg-overlay);
@@ -399,7 +434,7 @@ pre,
 }
 .markdown-body td {
   padding: 8px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--border);
   color: var(--text-secondary);
 }
 .markdown-body blockquote {
