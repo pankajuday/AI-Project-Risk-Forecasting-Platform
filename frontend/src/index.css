@@ -11,7 +11,7 @@
 
 /*  CSS Custom Properties  */
 :root {
-  /* Colors */
+  /* Colors - Dark Theme (Default) */
   --bg-base: #080810;
   --bg-surface: #0f0f1a;
   --bg-elevated: #16162a;
@@ -25,9 +25,10 @@
   --text-muted: #5a5a78;
 
   /* Accent — Indigo/Violet */
-  --accent: #021023;
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
   --accent-soft: rgba(99, 102, 241, 0.15);
-  --accent-glow: rgba(241, 153, 99, 0.35);
+  --accent-glow: rgba(99, 102, 241, 0.35);
 
   /* Status colors */
   --success: #10b981;
@@ -46,6 +47,31 @@
   --shadow-md: 0 4px 24px rgba(0, 0, 0, 0.5);
   --shadow-lg: 0 8px 48px rgba(0, 0, 0, 0.6);
   --glow-accent: 0 0 24px rgba(99, 102, 241, 0.25);
+}
+
+/* Light Theme Overrides */
+[data-theme='light'] {
+  --bg-base: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-elevated: #f1f5f9;
+  --bg-overlay: #e2e8f0;
+
+  --border: #e2e8f0;
+  --border-glow: rgba(99, 102, 241, 0.4);
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+
+  --accent: #4f46e5;
+  --accent-hover: #4338ca;
+  --accent-soft: rgba(79, 70, 229, 0.1);
+  --accent-glow: rgba(79, 70, 229, 0.25);
+
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --shadow-lg: 0 10px 30px rgba(0, 0, 0, 0.12);
+  --glow-accent: 0 0 20px rgba(79, 70, 229, 0.15);
 }
 
 /*  Reset & Base  */
@@ -72,6 +98,7 @@ body {
   -webkit-font-smoothing: antialiased;
   overflow-x: hidden;
   overflow-y: auto;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 /*  Scrollbar  */
@@ -87,7 +114,7 @@ body {
   border-radius: 99px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--text-muted);
 }
 
 /*  Typography  */
@@ -118,7 +145,8 @@ pre,
   padding: 20px;
   transition:
     border-color 0.2s,
-    box-shadow 0.2s;
+    box-shadow 0.2s,
+    background-color 0.2s;
 }
 .card:hover {
   border-color: var(--border-glow);
@@ -130,7 +158,7 @@ pre,
 
 /*  Glass  */
 .glass {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--bg-overlay);
   backdrop-filter: blur(12px);
   border: 1px solid var(--border);
   border-radius: 14px;
@@ -156,11 +184,11 @@ pre,
 .btn-primary {
   background: var(--accent);
   color: #fff;
-  box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+  box-shadow: 0 4px 14px rgba(79, 70, 229, 0.35);
 }
 .btn-primary:hover {
-  background: #151536;
-  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+  background: var(--accent-hover);
+  box-shadow: 0 6px 20px rgba(79, 70, 229, 0.5);
   transform: translateY(-1px);
 }
 .btn-primary:active {
@@ -175,7 +203,7 @@ pre,
 .btn-ghost:hover {
   background: var(--bg-elevated);
   color: var(--text-primary);
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: var(--border-glow);
 }
 
 .btn-danger {
@@ -207,7 +235,8 @@ pre,
   outline: none;
   transition:
     border-color 0.18s,
-    box-shadow 0.18s;
+    box-shadow 0.18s,
+    background-color 0.2s;
 }
 .input::placeholder {
   color: var(--text-muted);
@@ -230,31 +259,31 @@ pre,
 }
 .badge-indigo {
   background: var(--accent-soft);
-  color: #a5b4fc;
+  color: #6366f1;
   border: 1px solid rgba(99, 102, 241, 0.3);
 }
 .badge-green {
   background: rgba(16, 185, 129, 0.1);
-  color: #34d399;
+  color: #10b981;
   border: 1px solid rgba(16, 185, 129, 0.25);
 }
 .badge-yellow {
   background: rgba(234, 179, 8, 0.1);
-  color: #fbbf24;
+  color: #d97706;
   border: 1px solid rgba(234, 179, 8, 0.25);
 }
 .badge-red {
   background: rgba(239, 68, 68, 0.1);
-  color: #f87171;
+  color: #ef4444;
   border: 1px solid rgba(239, 68, 68, 0.25);
 }
 .badge-orange {
   background: rgba(249, 115, 22, 0.1);
-  color: #fb923c;
+  color: #ea580c;
   border: 1px solid rgba(249, 115, 22, 0.25);
 }
 .badge-muted {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--bg-overlay);
   color: var(--text-secondary);
   border: 1px solid var(--border);
 }
@@ -372,7 +401,7 @@ pre,
   padding: 2px 6px;
   border-radius: 5px;
   font-size: 12.5px;
-  color: #a5b4fc;
+  color: var(--accent);
 }
 .markdown-body pre {
   background: var(--bg-overlay);
@@ -399,7 +428,7 @@ pre,
 }
 .markdown-body td {
   padding: 8px 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--border);
   color: var(--text-secondary);
 }
 .markdown-body blockquote {
