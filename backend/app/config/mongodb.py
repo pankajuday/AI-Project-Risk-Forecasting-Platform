@@ -19,9 +19,10 @@ async def init_db():
     from models.document_model import DocumentRecord
     from models.report_model import AnalysisReport
     from models.chat_model import ChatSession
+    from models.tracked_risk_model import TrackedRisk, RiskEvent
 
     await init_beanie(
         database=db,
-        document_models=[User, Project, DocumentRecord, AnalysisReport, ChatSession],
+        document_models=[User, Project, DocumentRecord, AnalysisReport, ChatSession, TrackedRisk, RiskEvent],
     )
     print(f"[DB] Connected to MongoDB: {db_name}")
