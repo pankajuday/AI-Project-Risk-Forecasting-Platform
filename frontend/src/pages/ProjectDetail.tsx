@@ -31,7 +31,7 @@ export default function ProjectDetail() {
   if (loading) {
     return (
       <div className="p-8">
-        <div className="skeleton h-[260px]" />
+        <div className="skeleton h-65" />
       </div>
     );
   }
@@ -48,9 +48,9 @@ export default function ProjectDetail() {
   return (
     <div className="anim-fade-up flex flex-wrap items-start gap-6">
       {/*  Project Details Sidebar  */}
-      <aside className="flex w-[260px] shrink-0 flex-col gap-4">
+      <aside className="flex w-65 shrink-0 flex-col gap-4">
         {/* Back link & Project Card */}
-        <div className="card flex flex-col gap-3.5 p-[18px]">
+        <div className="card flex flex-col gap-3.5 p-4.5">
           <button
             className="btn btn-ghost -ml-1 self-start border-0 px-2 py-1 text-xs"
             onClick={() => navigate('/projects')}
@@ -90,7 +90,7 @@ export default function ProjectDetail() {
               <button
                 key={t.id}
                 onClick={() => setActiveTab(t.id as any)}
-                className={`flex w-full items-center gap-3 rounded-[10px] border px-3.5 py-[11px] text-left text-[13.5px] transition-all duration-200 ${isActive ? 'border-indigo-500/30 bg-(--accent-soft) font-bold text-indigo-300' : 'border-transparent font-medium text-(--text-secondary)'}`}
+                className={`flex w-full items-center gap-3 rounded-[10px] border px-3.5 py-2.75 text-left text-[13.5px] transition-all duration-200 ${isActive ? 'border-indigo-500/30 bg-(--accent-soft) font-bold text-indigo-300' : 'border-transparent font-medium text-(--text-secondary)'}`}
               >
                 <span className={isActive ? 'text-indigo-400' : 'text-(--text-muted)'}>
                   {t.icon}

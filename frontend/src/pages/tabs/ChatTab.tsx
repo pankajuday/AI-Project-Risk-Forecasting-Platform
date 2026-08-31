@@ -95,7 +95,7 @@ export default function ChatTab({ projectId }: { projectId: string }) {
               className={`flex items-start gap-3.5 ${msg.role === 'user' ? 'flex-row-reverse' : ''}`}
             >
               <div
-                className={`flex size-[34px] shrink-0 items-center justify-center rounded-full ${msg.role === 'user' ? 'bg-indigo-500' : 'border border-indigo-500/30 bg-[#021023]'}`}
+                className={`flex size-8.5 shrink-0 items-center justify-center rounded-full ${msg.role === 'user' ? 'bg-indigo-500' : 'border border-indigo-500/30 bg-[#021023]'}`}
               >
                 {msg.role === 'user' ? (
                   <User size={16} color="#fff" />
@@ -106,7 +106,7 @@ export default function ChatTab({ projectId }: { projectId: string }) {
 
               <div className="max-w-[80%]">
                 <div
-                  className={`rounded-[14px] px-[18px] py-3 text-sm leading-[1.6] shadow-(--shadow-sm) ${msg.role === 'user' ? 'rounded-tr-sm bg-gradient-to-br from-indigo-600 to-indigo-500 text-white' : 'rounded-tl-sm border border-(--border) bg-(--bg-surface) text-(--text-primary)'}`}
+                  className={`rounded-[14px] px-4.5 py-3 text-sm leading-[1.6] shadow-(--shadow-sm) ${msg.role === 'user' ? 'rounded-tr-sm bg-linear-to-br from-indigo-600 to-indigo-500 text-white' : 'rounded-tl-sm border border-(--border) bg-(--bg-surface) text-(--text-primary)'}`}
                 >
                   <div className={msg.role === 'assistant' ? 'markdown-body' : ''}>
                     <MdFormatter content={msg.content} />
@@ -126,10 +126,10 @@ export default function ChatTab({ projectId }: { projectId: string }) {
 
         {sending && (
           <div className="flex items-center gap-3.5">
-            <div className="flex size-[34px] items-center justify-center rounded-full border border-indigo-500/30 bg-[#021023]">
+            <div className="flex size-8.5 items-center justify-center rounded-full border border-indigo-500/30 bg-[#021023]">
               <Bot size={16} color="#a5b4fc" />
             </div>
-            <div className="flex items-center gap-2 rounded-[14px] rounded-tl-sm border border-(--border) bg-(--bg-surface) px-[18px] py-3 text-[13px] text-(--text-muted)">
+            <div className="flex items-center gap-2 rounded-[14px] rounded-tl-sm border border-(--border) bg-(--bg-surface) px-4.5 py-3 text-[13px] text-(--text-muted)">
               <Loader2 size={15} className="anim-spin" color="#a5b4fc" />
               <span>Analyzing document context...</span>
             </div>
@@ -140,7 +140,7 @@ export default function ChatTab({ projectId }: { projectId: string }) {
       {/*  Fixed Prompt Input Area at Bottom  */}
       <form
         onSubmit={handleSend}
-        className="sticky inset-x-0 bottom-0 z-10 bg-gradient-to-t from-(--bg-base) from-80% to-transparent py-4 pb-2 backdrop-blur-sm"
+        className="sticky inset-x-0 bottom-0 z-10 bg-linear-to-t from-(--bg-base) from-80% to-transparent py-4 pb-2 backdrop-blur-sm"
       >
         <div className="relative flex items-center rounded-[14px] border border-(--border-glow) bg-(--bg-surface) px-1.5 py-1 shadow-(--shadow-md)">
           <input

@@ -66,9 +66,7 @@ export default function CreateProject() {
 
       // 2. Upload attached documents if any were dropped/selected
       if (files.length > 0) {
-        await Promise.all(
-          files.map(file => documentsApi.upload(newProjectId, file))
-        );
+        await Promise.all(files.map(file => documentsApi.upload(newProjectId, file)));
       }
 
       // 3. Navigate to the project detail view
@@ -89,13 +87,11 @@ export default function CreateProject() {
 
       <div className="card">
         <h1 className="mb-2 text-2xl font-extrabold">Create New Project</h1>
-        <p className="mb-6 text-[var(--text-muted)]">
-          Start a new AI-powered risk analysis workspace.
-        </p>
+        <p className="mb-6 text-(--text-muted)">Start a new AI-powered risk analysis workspace.</p>
 
         <form onSubmit={handleSubmit}>
           <div className="mb-5">
-            <label className="mb-2 block text-[13px] font-semibold text-[var(--text-secondary)]">
+            <label className="mb-2 block text-[13px] font-semibold text-(--text-secondary)">
               Project Name *
             </label>
             <input
@@ -110,7 +106,7 @@ export default function CreateProject() {
           </div>
 
           <div className="mb-5">
-            <label className="mb-2 block text-[13px] font-semibold text-[var(--text-secondary)]">
+            <label className="mb-2 block text-[13px] font-semibold text-(--text-secondary)">
               Description
             </label>
             <textarea
@@ -124,7 +120,7 @@ export default function CreateProject() {
 
           {/* Drag and Drop Zone */}
           <div className="mb-6">
-            <label className="mb-2 block text-[13px] font-semibold text-[var(--text-secondary)]">
+            <label className="mb-2 block text-[13px] font-semibold text-(--text-secondary)">
               Project Documents
             </label>
 
@@ -144,17 +140,18 @@ export default function CreateProject() {
               onClick={() => fileInputRef.current?.click()}
               className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 transition-all ${
                 isDragging
-                  ? 'border-[var(--accent)] bg-[var(--accent-soft)]'
-                  : 'border-[var(--border)] bg-[var(--bg-elevated)] hover:border-[var(--border-glow)]'
+                  ? 'border-(--accent) bg-(--accent-soft)'
+                  : 'border-(--border) bg-(--bg-elevated) hover:border-(--border-glow)'
               }`}
             >
-              <div className="mb-2 rounded-full bg-[var(--bg-overlay)] p-3 text-[var(--accent)]">
+              <div className="mb-2 rounded-full bg-(--bg-overlay) p-3 text-(--accent)">
                 <UploadCloud size={24} />
               </div>
-              <p className="text-sm font-semibold text-[var(--text-primary)]">
-                Click to upload <span className="font-normal text-[var(--text-muted)]">or drag & drop</span>
+              <p className="text-sm font-semibold text-(--text-primary)">
+                Click to upload{' '}
+                <span className="font-normal text-(--text-muted)">or drag & drop</span>
               </p>
-              <p className="mt-1 text-xs text-[var(--text-muted)]">
+              <p className="mt-1 text-xs text-(--text-muted)">
                 PDF, DOCX, TXT, CSV (Max 10MB per file)
               </p>
             </div>
@@ -165,24 +162,24 @@ export default function CreateProject() {
                 {files.map((file, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center justify-between rounded-lg border border-[var(--border)] bg-[var(--bg-surface)] px-3 py-2 text-xs"
+                    className="flex items-center justify-between rounded-lg border border-(--border) bg-(--bg-surface) px-3 py-2 text-xs"
                   >
                     <div className="flex items-center gap-2 truncate">
-                      <FileText size={16} className="text-[var(--accent)]" />
-                      <span className="truncate font-medium text-[var(--text-primary)]">
+                      <FileText size={16} className="text-(--accent)" />
+                      <span className="truncate font-medium text-(--text-primary)">
                         {file.name}
                       </span>
-                      <span className="text-[var(--text-muted)]">
+                      <span className="text-(--text-muted)">
                         ({(file.size / (1024 * 1024)).toFixed(2)} MB)
                       </span>
                     </div>
                     <button
                       type="button"
-                      onClick={(e) => {
+                      onClick={e => {
                         e.stopPropagation();
                         removeFile(idx);
                       }}
-                      className="rounded p-1 text-[var(--text-muted)] hover:bg-[var(--bg-overlay)] hover:text-[var(--danger)]"
+                      className="rounded p-1 text-(--text-muted) hover:bg-(--bg-overlay) hover:text-(--danger)"
                     >
                       <X size={14} />
                     </button>

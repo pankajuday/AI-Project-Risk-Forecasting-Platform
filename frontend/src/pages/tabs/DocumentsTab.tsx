@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { UploadCloud, File, Trash2, RefreshCw, FolderClosed, X, Eye } from 'lucide-react';
+import { UploadCloud, File, Trash2, RefreshCw, X, Eye } from 'lucide-react';
 import { documentsApi } from '@/api';
 import type { DocumentRecord } from '@/types';
 import Viewer from '../../components/DocumentViewer/Viewer';
