@@ -1,11 +1,17 @@
 services:
   backend:
     build:
-      context: ../backend
-      dockerfile: ../docker/backend.Dockerfile
+      context: ..
+      dockerfile: docker/backend.Dockerfile
     env_file:
       - ../backend/.env
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017
+      - QDRANT_URL=http://qdrant:6333
+      - BACKEND_HOST=0.0.0.0
     container_name: backend
+    ports:
+      - "3000:3000"
     restart: unless-stopped
     networks:
       - rag-network
@@ -16,8 +22,8 @@ services:
 
   frontend:
     build:
-      context: ../frontend
-      dockerfile: ../docker/frontend.Dockerfile
+      context: ..
+      dockerfile: docker/frontend.Dockerfile
     env_file:
       - ../frontend/.env
     container_name: frontend
