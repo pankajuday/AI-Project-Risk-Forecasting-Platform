@@ -74,6 +74,9 @@ The backend handles data ingestion, AI processing, and data persistence.
     TORCH_COMPILE_DISABLE=1
     TORCHINDUCTOR_DISABLE=1
     QDRANT_URL=http://localhost:6333
+    BACKEND_HOST=127.0.0.1
+    BACKEND_PORT=3000
+    BACKEND_RELOAD=True
     ```
 
 4.  **Run the Server:**
