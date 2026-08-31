@@ -53,6 +53,7 @@ from agents.document_generator_agent import (
 from config.qdrant import sync_analysis_artifacts_to_qdrant
 from models.report_model import AnalysisReport, AnalysisStatus
 from models.project_model import Project, ProjectStatus
+from models.document_model import DocumentRecord
 
 
 
@@ -136,7 +137,7 @@ async def save_node(state: dict) -> dict:
         await project.save()
 
     log_msg = (
-        f"✅ save_node: report saved — "
+        f"save_node: report saved — "
         f"health={report.health_score}/100, "
         f"risks={len(report.risks)}, "
         f"docs={len(report.generated_documents)}"
@@ -232,6 +233,26 @@ async def run_analysis(project_id: str) -> None:
     """
     print(f"\n[ORCHESTRATOR] Starting full analysis for project: {project_id}")
 
+    # Ensure project exists and has uploaded documents
+    project = await Project.get(project_id)
+    doc_count = await DocumentRecord.find(DocumentRecord.project_id == project_id).count()
+    if not project or project.total_files == 0 or doc_count == 0:
+        error_msg = "Cannot run analysis on an empty project (total_files is 0). Please upload at least one project document first."
+        print(f"[ORCHESTRATOR] Aborted: {error_msg}")
+        report = await AnalysisReport.find_one(AnalysisReport.project_id == project_id)
+        if not report:
+            report = AnalysisReport(project_id=project_id)
+        report.status = AnalysisStatus.FAILED
+        report.error_message = error_msg
+        report.pipeline_step = "failed"
+        await report.save()
+
+        if project:
+            project.status = ProjectStatus.FAILED
+            project.updated_at = datetime.now(timezone.utc)
+            await project.save()
+        return
+
     # Mark report as RUNNING
     existing = await AnalysisReport.find_one(AnalysisReport.project_id == project_id)
     if existing:
@@ -315,6 +336,11 @@ async def run_missing_docs_only(project_id: str) -> dict:
     Returns a summary dict with existing/missing/generated doc type lists.
     """
     print(f"\n[ORCHESTRATOR] Starting missing-docs-only pipeline for project: {project_id}")
+
+    project = await Project.get(project_id)
+    doc_count = await DocumentRecord.find(DocumentRecord.project_id == project_id).count()
+    if not project or project.total_files == 0 or doc_count == 0:
+        raise ValueError("Cannot generate documents for an empty project (total_files is 0). Please upload at least one project document first.")
 
     # Load existing report
     report = await AnalysisReport.find_one(AnalysisReport.project_id == project_id)

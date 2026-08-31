@@ -17,6 +17,8 @@ from fastapi import APIRouter, BackgroundTasks, HTTPException
 from agents.orchestrator import run_analysis, run_missing_docs_only
 from agents.document_generator_agent import ALL_DOC_TYPES
 from models.report_model import AnalysisReport, AnalysisStatus
+from models.document_model import DocumentRecord
+from models.project_model import Project
 
 router = APIRouter()
 
@@ -31,6 +33,13 @@ async def trigger_analysis(project_id: str, background_tasks: BackgroundTasks):
     Trigger the full LangGraph analysis pipeline for a project.
     Runs in the background:  scope → risk → health → doc_audit → gen/skip → save
     """
+    project = await Project.get(project_id)
+    if not project or project.total_files == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot run analysis on an empty project (total_files is 0). Please upload at least one project document first.",
+        )
+
     existing = await AnalysisReport.find_one(AnalysisReport.project_id == project_id)
     if existing and existing.status == AnalysisStatus.RUNNING:
         return {"message": "Analysis is already running.", "status": "running"}
@@ -54,6 +63,13 @@ async def generate_missing_documents(project_id: str, background_tasks: Backgrou
 
     Requires a completed (or partial) analysis report to already exist.
     """
+    project = await Project.get(project_id)
+    if not project or project.total_files == 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot generate documents for an empty project (total_files is 0). Please upload at least one project document first.",
+        )
+
     existing = await AnalysisReport.find_one(AnalysisReport.project_id == project_id)
     if not existing:
         raise HTTPException(
@@ -71,7 +87,6 @@ async def generate_missing_documents(project_id: str, background_tasks: Backgrou
     }
 
 
-
 # 
 # Read endpoints
 # 
@@ -81,9 +96,14 @@ async def get_analysis_status(project_id: str):
     """
     Poll the current pipeline status and a lightweight progress summary.
     """
+    uploaded_count = await DocumentRecord.find(DocumentRecord.project_id == project_id).count()
     report = await AnalysisReport.find_one(AnalysisReport.project_id == project_id)
     if not report:
-        return {"status": "not_started", "project_id": project_id}
+        return {
+            "status": "not_started",
+            "project_id": project_id,
+            "uploaded_doc_count": uploaded_count,
+        }
 
     return {
         "status": report.status,
@@ -91,6 +111,7 @@ async def get_analysis_status(project_id: str):
         "health_score": report.health_score,
         "risk_count": len(report.risks),
         "doc_count": len(report.generated_documents),
+        "uploaded_doc_count": uploaded_count,
         "existing_doc_types": report.existing_doc_types,
         "missing_doc_types": report.missing_doc_types,
         "error": report.error_message,
