@@ -6,7 +6,10 @@ import uvicorn
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 def main():
-    uvicorn.run("app:app", port=3000, host="127.0.0.1", reload=True)
+    host = os.getenv("BACKEND_HOST", "127.0.0.1")
+    port = int(os.getenv("BACKEND_PORT", 3000))
+    reload = os.getenv("BACKEND_RELOAD", "True").lower() == "true"
+    uvicorn.run("app:app", port=port, host=host, reload=reload)
 
 if __name__ == "__main__":
     main()
