@@ -8,8 +8,9 @@ import {
   FileText,
   Check,
   ArrowRight,
+  UploadCloud,
 } from 'lucide-react';
-import { analysisApi } from '@/api';
+import { analysisApi, documentsApi } from '@/api';
 import type { AnalysisStatus } from '@/types';
 
 interface DocAudit {
@@ -48,58 +49,106 @@ export default function AnalysisTab({ projectId }: { projectId: string }) {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
   const [docAudit, setDocAudit] = useState<DocAudit | null>(null);
+  const [uploadedDocCount, setUploadedDocCount] = useState<number | null>(null);
 
-  const fetchStatusAndAudit = async () => {
+  const fetchInitialData = async () => {
     try {
-      const [statusRes, auditRes] = await Promise.all([
+      setLoading(true);
+      const [statusRes, docsRes] = await Promise.all([
         analysisApi.getStatus(projectId),
-        analysisApi.getDocAudit(projectId).catch(() => null), // fail gracefully if no report yet
+        documentsApi.list(projectId).catch(() => null),
       ]);
 
-      setStatus(statusRes.data.status);
+      const currentStatus = statusRes.data.status;
+      setStatus(currentStatus);
       setPipelineStep(statusRes.data.pipeline_step || '');
 
-      if (auditRes) {
-        setDocAudit(auditRes.data);
+      if (docsRes) {
+        setUploadedDocCount(docsRes.data.length);
+      } else if (statusRes.data.uploaded_doc_count !== undefined) {
+        setUploadedDocCount(statusRes.data.uploaded_doc_count);
+      }
+
+      // Fetch doc audit ONLY if an analysis report is already ready
+      if (currentStatus === 'ready') {
+        const auditRes = await analysisApi.getDocAudit(projectId).catch(() => null);
+        if (auditRes) setDocAudit(auditRes.data);
+      } else {
+        setDocAudit(null);
       }
     } catch (err) {
-      console.error('Error fetching status/audit:', err);
+      console.error('Error fetching initial analysis data:', err);
     } finally {
       setLoading(false);
     }
   };
 
+  const pollStatus = async () => {
+    try {
+      const statusRes = await analysisApi.getStatus(projectId);
+      const newStatus = statusRes.data.status;
+      setStatus(newStatus);
+      setPipelineStep(statusRes.data.pipeline_step || '');
+
+      // Once finished, load the final document audit
+      if (newStatus === 'ready') {
+        const auditRes = await analysisApi.getDocAudit(projectId).catch(() => null);
+        if (auditRes) setDocAudit(auditRes.data);
+      }
+    } catch (err) {
+      console.error('Error polling status:', err);
+    }
+  };
+
+  // Initial fetch when component mounts or project changes
   useEffect(() => {
-    fetchStatusAndAudit();
-    const interval = setInterval(() => {
-      fetchStatusAndAudit();
-    }, 2500);
-    return () => clearInterval(interval);
+    fetchInitialData();
   }, [projectId]);
 
+  // Poll ONLY the lightweight status endpoint while analysis pipeline is running
+  useEffect(() => {
+    if (status !== 'running') return;
+
+    const interval = setInterval(() => {
+      pollStatus();
+    }, 2500);
+
+    return () => clearInterval(interval);
+  }, [status, projectId]);
+
   const handleRunFullAnalysis = async () => {
+    if (uploadedDocCount === 0) {
+      alert('Cannot run analysis on an empty project. Please upload at least one document first.');
+      return;
+    }
     try {
       setActionLoading(true);
       await analysisApi.run(projectId);
       setStatus('running');
       setPipelineStep('starting');
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Failed to start full analysis');
+      const detail = err.response?.data?.detail || 'Failed to start full analysis';
+      alert(detail);
     } finally {
       setActionLoading(false);
     }
   };
 
   const handleGenerateMissing = async () => {
+    if (uploadedDocCount === 0) {
+      alert('Cannot generate documents for an empty project. Please upload at least one document first.');
+      return;
+    }
     try {
       setActionLoading(true);
       await analysisApi.generateMissing(projectId);
       setStatus('running');
       setPipelineStep('doc_audit');
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
-      alert('Failed to generate missing documents');
+      const detail = err.response?.data?.detail || 'Failed to generate missing documents';
+      alert(detail);
     } finally {
       setActionLoading(false);
     }
@@ -130,10 +179,22 @@ export default function AnalysisTab({ projectId }: { projectId: string }) {
       {/* 1. Main Status Card */}
       <div className="card px-5 py-10 text-center">
         <Activity size={44} color="var(--accent-glow)" className="mx-auto mb-5" />
-        <h2 className="mb-2 text-[22px] font-extrabold">LangGraph Agent Workspace</h2>
+        <h2 className="mb-2 text-[22px] font-extrabold">Analysing Workspace</h2>
         <p className="mb-7 text-[14.5px] text-(--text-secondary)">
           Our multi-agent pipeline coordinates state updates across analysis and generation steps.
         </p>
+
+        {uploadedDocCount === 0 && status !== 'running' && (
+          <div className="mx-auto mb-6 flex max-w-md flex-col items-center justify-center gap-2 rounded-xl border border-amber-500/20 bg-amber-500/10 p-4 text-center">
+            <div className="flex items-center gap-2 font-semibold text-amber-400">
+              <UploadCloud size={18} />
+              <span>No Documents Uploaded</span>
+            </div>
+            <p className="text-xs text-(--text-secondary)">
+              Upload at least one project document (BRD, SRS, SOW, etc.) in the <strong>Documents</strong> tab before running the AI analysis pipeline.
+            </p>
+          </div>
+        )}
 
         {status === 'running' ? (
           <div className="mx-auto max-w-115">
@@ -160,9 +221,10 @@ export default function AnalysisTab({ projectId }: { projectId: string }) {
               <span className="font-semibold">Previous analysis attempt failed</span>
             </div>
             <button
-              className="btn btn-primary"
+              className={`btn btn-primary ${uploadedDocCount === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
               onClick={handleRunFullAnalysis}
-              disabled={actionLoading}
+              disabled={actionLoading || uploadedDocCount === 0}
+              title={uploadedDocCount === 0 ? 'Upload project documents first' : ''}
             >
               <RefreshCw size={15} /> Re-Run Full Analysis
             </button>
@@ -176,9 +238,10 @@ export default function AnalysisTab({ projectId }: { projectId: string }) {
             </p>
             <div className="flex justify-center gap-3">
               <button
-                className="btn btn-ghost"
+                className={`btn btn-ghost ${uploadedDocCount === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
                 onClick={handleRunFullAnalysis}
-                disabled={actionLoading}
+                disabled={actionLoading || uploadedDocCount === 0}
+                title={uploadedDocCount === 0 ? 'Upload project documents first' : ''}
               >
                 <RefreshCw size={14} /> Full Re-run
               </button>
@@ -187,9 +250,10 @@ export default function AnalysisTab({ projectId }: { projectId: string }) {
         ) : (
           <div>
             <button
-              className="btn btn-primary px-6 py-3 text-[15px]"
+              className={`btn btn-primary px-6 py-3 text-[15px] ${uploadedDocCount === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
               onClick={handleRunFullAnalysis}
-              disabled={actionLoading}
+              disabled={actionLoading || uploadedDocCount === 0}
+              title={uploadedDocCount === 0 ? 'Upload project documents first' : ''}
             >
               <Play size={16} /> Run Full Analysis
             </button>
