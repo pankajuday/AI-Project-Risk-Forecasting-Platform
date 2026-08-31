@@ -106,7 +106,7 @@ export default function AnalysisTab({ projectId }: { projectId: string }) {
   };
 
   if (loading && status === 'not_started') {
-    return <div className="skeleton" style={{ height: 260 }} />;
+    return <div className="skeleton h-65" />;
   }
 
   // Calculate progress estimation based on pipeline step
@@ -126,82 +126,38 @@ export default function AnalysisTab({ projectId }: { projectId: string }) {
   };
 
   return (
-    <div
-      className="anim-fade-in"
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        gap: 24,
-        maxWidth: 800,
-        margin: '20px auto',
-      }}
-    >
+    <div className="anim-fade-in mx-auto my-5 flex max-w-200 flex-col gap-6">
       {/* 1. Main Status Card */}
-      <div className="card text-center" style={{ padding: '40px 20px' }}>
-        <Activity size={44} color="var(--accent-glow)" style={{ margin: '0 auto 20px' }} />
-        <h2 style={{ fontSize: 22, fontWeight: 800, marginBottom: 8 }}>
-          LangGraph Agent Workspace
-        </h2>
-        <p style={{ color: 'var(--text-secondary)', marginBottom: 28, fontSize: 14.5 }}>
+      <div className="card px-5 py-10 text-center">
+        <Activity size={44} color="var(--accent-glow)" className="mx-auto mb-5" />
+        <h2 className="mb-2 text-[22px] font-extrabold">LangGraph Agent Workspace</h2>
+        <p className="mb-7 text-[14.5px] text-(--text-secondary)">
           Our multi-agent pipeline coordinates state updates across analysis and generation steps.
         </p>
 
         {status === 'running' ? (
-          <div style={{ maxWidth: 460, margin: '0 auto' }}>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 12,
-                marginBottom: 14,
-                color: '#a5b4fc',
-              }}
-            >
+          <div className="mx-auto max-w-115">
+            <div className="mb-3.5 flex items-center justify-center gap-3 text-[#a5b4fc]">
               <RefreshCw size={18} className="anim-spin" />
-              <span style={{ fontWeight: 600, fontSize: 15 }}>
+              <span className="text-[15px] font-semibold">
                 {STEP_NAME_MAP[pipelineStep] || 'Processing...'}
               </span>
             </div>
-            <div
-              className="progress-bar"
-              style={{
-                width: '100%',
-                height: 6,
-                background: 'rgba(255,255,255,0.06)',
-                borderRadius: 99,
-                overflow: 'hidden',
-                marginBottom: 6,
-              }}
-            >
+            <div className="progress-bar mb-1.5 h-1.5 w-full overflow-hidden rounded-full bg-white/6">
               <div
-                className="progress-bar-fill"
-                style={{
-                  background: 'linear-gradient(90deg, #6366f1, #8b5cf6)',
-                  height: '100%',
-                  width: `${getStepProgress(pipelineStep)}%`,
-                  transition: 'width 0.4s ease',
-                }}
+                className="progress-bar-fill h-full bg-linear-to-r from-[#6366f1] to-[#8b5cf6] transition-[width] duration-400 ease-in-out"
+                style={{ width: `${getStepProgress(pipelineStep)}%` }}
               />
             </div>
-            <div style={{ fontSize: 12, color: 'var(--text-muted)' }}>
+            <div className="text-xs text-(--text-muted)">
               Step Progress: {getStepProgress(pipelineStep)}%
             </div>
           </div>
         ) : status === 'failed' ? (
           <div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 8,
-                color: 'var(--danger)',
-                marginBottom: 20,
-              }}
-            >
+            <div className="mb-5 flex items-center justify-center gap-2 text-(--danger)">
               <AlertTriangle size={20} />
-              <span style={{ fontWeight: 600 }}>Previous analysis attempt failed</span>
+              <span className="font-semibold">Previous analysis attempt failed</span>
             </div>
             <button
               className="btn btn-primary"
@@ -212,22 +168,13 @@ export default function AnalysisTab({ projectId }: { projectId: string }) {
             </button>
           </div>
         ) : status === 'ready' ? (
-          <div style={{ color: 'var(--success)' }}>
-            <CheckCircle size={44} style={{ margin: '0 auto 16px' }} />
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--text-primary)' }}>
-              Workspace Analysis Complete
-            </h3>
-            <p
-              style={{
-                color: 'var(--text-secondary)',
-                fontSize: 13.5,
-                marginTop: 6,
-                marginBottom: 20,
-              }}
-            >
+          <div className="text-(--success)">
+            <CheckCircle size={44} className="mx-auto mb-4" />
+            <h3 className="text-lg font-bold text-(--text-primary)">Workspace Analysis Complete</h3>
+            <p className="mt-1.5 mb-5 text-[13.5px] text-(--text-secondary)">
               AI reports and risk metrics have been successfully compiled.
             </p>
-            <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
+            <div className="flex justify-center gap-3">
               <button
                 className="btn btn-ghost"
                 onClick={handleRunFullAnalysis}
@@ -240,10 +187,9 @@ export default function AnalysisTab({ projectId }: { projectId: string }) {
         ) : (
           <div>
             <button
-              className="btn btn-primary"
+              className="btn btn-primary px-6 py-3 text-[15px]"
               onClick={handleRunFullAnalysis}
               disabled={actionLoading}
-              style={{ padding: '12px 24px', fontSize: 15 }}
             >
               <Play size={16} /> Run Full Analysis
             </button>
@@ -254,88 +200,52 @@ export default function AnalysisTab({ projectId }: { projectId: string }) {
       {/* 2. Document Audit Checklist Card */}
       {docAudit && (
         <div className="card">
-          <div
-            style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: 18,
-            }}
-          >
+          <div className="mb-4.5 flex items-center justify-between">
             <div>
-              <h3
-                style={{
-                  fontSize: 16,
-                  fontWeight: 700,
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                }}
-              >
+              <h3 className="flex items-center gap-2 text-[16px] font-bold">
                 <FileText size={18} color="#a5b4fc" />
                 Document Deliverables Audit
               </h3>
-              <p style={{ fontSize: 12.5, color: 'var(--text-muted)', marginTop: 4 }}>
+              <p className="mt-1 text-[12.5px] text-(--text-muted)">
                 LangGraph tracks document generation status to prevent redundant LLM invocations.
               </p>
             </div>
-            <span className="badge badge-muted" style={{ padding: '4px 10px' }}>
+            <span className="badge badge-muted px-2.5 py-1">
               {docAudit.present_count} / {docAudit.total} Built
             </span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 20 }}>
+          <div className="mb-5 flex flex-col gap-2.5">
             {docAudit.all_doc_types.map(docType => {
               const isPresent = docAudit.existing_doc_types.includes(docType);
               return (
                 <div
                   key={docType}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '10px 14px',
-                    background: 'var(--bg-elevated)',
-                    borderRadius: 10,
-                    border: isPresent
-                      ? '1px solid rgba(16,185,129,0.1)'
-                      : '1px solid rgba(245,158,11,0.1)',
-                  }}
+                  className={`flex items-center justify-between rounded-xl border bg-(--bg-elevated) px-3.5 py-2.5 ${
+                    isPresent ? 'border-emerald-500/10' : 'border-amber-500/10'
+                  }`}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div className="flex items-center gap-2.5">
                     <div
-                      style={{
-                        width: 20,
-                        height: 20,
-                        borderRadius: '50%',
-                        background: isPresent ? 'rgba(16,185,129,0.15)' : 'rgba(245,158,11,0.15)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
+                      className={`flex h-5 w-5 items-center justify-center rounded-full ${
+                        isPresent ? 'bg-emerald-500/15' : 'bg-amber-500/15'
+                      }`}
                     >
                       {isPresent ? (
                         <Check size={12} color="var(--success)" />
                       ) : (
-                        <span style={{ fontSize: 14, fontWeight: 700, color: 'var(--warning)' }}>
-                          -
-                        </span>
+                        <span className="text-sm font-bold text-(--warning)">-</span>
                       )}
                     </div>
                     <span
-                      style={{
-                        fontSize: 13.5,
-                        fontWeight: 500,
-                        color: isPresent ? 'var(--text-primary)' : 'var(--text-secondary)',
-                      }}
+                      className={`text-[13.5px] font-medium ${
+                        isPresent ? 'text-(--text-primary)' : 'text-(--text-secondary)'
+                      }`}
                     >
                       {DOC_NAME_MAP[docType] || docType}
                     </span>
                   </div>
-                  <span
-                    className={`badge badge-${isPresent ? 'green' : 'yellow'}`}
-                    style={{ fontSize: 10.5 }}
-                  >
+                  <span className={`badge badge-${isPresent ? 'green' : 'yellow'} text-[10.5px]`}>
                     {isPresent ? 'Ready' : 'Pending'}
                   </span>
                 </div>
@@ -345,34 +255,17 @@ export default function AnalysisTab({ projectId }: { projectId: string }) {
 
           {/* Conditional Action based on missing documents */}
           {!docAudit.all_present && status !== 'running' && (
-            <div
-              style={{
-                background: 'rgba(99, 102, 241, 0.05)',
-                border: '1px solid rgba(99, 102, 241, 0.15)',
-                borderRadius: 12,
-                padding: 16,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                flexWrap: 'wrap',
-                gap: 12,
-              }}
-            >
-              <div style={{ flex: 1, minWidth: 260 }}>
-                <div style={{ fontSize: 13.5, fontWeight: 600, color: 'var(--text-primary)' }}>
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-indigo-500/15 bg-indigo-500/5 p-4">
+              <div className="min-w-65 flex-1">
+                <div className="text-[13.5px] font-semibold text-(--text-primary)">
                   Missing documents detected ({docAudit.missing_count})
                 </div>
-                <div style={{ fontSize: 12, color: 'var(--text-secondary)', marginTop: 2 }}>
+                <div className="mt-0.5 text-xs text-(--text-secondary)">
                   Generate only the missing files without re-running the full agent analysis.
                 </div>
               </div>
               <button
-                className="btn"
-                style={{
-                  background: '#021023',
-                  color: '#a5b4fc',
-                  border: '1px solid rgba(99, 102, 241, 0.3)',
-                }}
+                className="btn border border-indigo-500/30 bg-[#021023] text-[#a5b4fc]"
                 onClick={handleGenerateMissing}
                 disabled={actionLoading}
               >
