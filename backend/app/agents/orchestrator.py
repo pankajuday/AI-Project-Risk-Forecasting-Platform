@@ -120,6 +120,22 @@ async def save_node(state: dict) -> dict:
     except Exception as exc:
         print(f"[GRAPH] ⚠ save_node: could not sync analysis artifacts to Qdrant — {exc}")
 
+    # ── Risk lifecycle reconciliation (Phase 2) ──────────────────────────
+    # Runs after the report is persisted. If it fails, the analysis still
+    # succeeds — reconciliation is auxiliary.
+    if report.risks and report.status == AnalysisStatus.READY:
+        try:
+            from agents.risk_reconciler import reconcile_risks
+            recon_summary = await reconcile_risks(project_id, report.risks)
+            print(
+                f"[GRAPH] ✓ save_node: risk reconciliation complete — "
+                f"created={recon_summary['created']}, "
+                f"matched={recon_summary['matched']}, "
+                f"missed={recon_summary['not_detected']}"
+            )
+        except Exception as exc:
+            print(f"[GRAPH] ⚠ save_node: risk reconciliation failed — {exc}")
+
     # Update project document
     project = await Project.get(project_id)
     if project and report.health_score is not None:

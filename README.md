@@ -22,12 +22,12 @@ It moves beyond simple data aggregation by performing deep document understandin
 
 ##  Key Features
 
-*   **Intelligent Document Ingestion:** Supports multiple file formats including `.docx`, `.pdf`, `.xlsx`, and `.csv`.
-*   **Multi-Modal Data Processing:** Integrates advanced parsers for handling text, structured tables, and key-value data from various sources.
-*   **Generative AI Analysis (LLM-Powered):** Uses Retrieval-Augmented Generation (RAG) techniques to ground analytical responses in the uploaded corporate documentation, ensuring accuracy and contextuality.
-*   **Stateful Project Management:** Organizes analyses into distinct, trackable `Projects`, managing the full lifecycle from upload to final report generation.
-*   **Risk Scoring & Health Metrics:** Generates quantitative and qualitative risk scores, visualizing the current health status of the monitored entity.
-*   **Automated Reporting:** Creates highly detailed reports, including summarized findings, identified risks, and predicted trends.
+- **Multi-Modal Document Processing:** Parses `.docx`, `.pdf`, `.xlsx`, and `.csv` using Docling.
+- **RAG-Grounded Analysis:** Embeds corporate documentation to ensure LLM risk forecasts are strictly tied to enterprise context.
+- **LangGraph Multi-Agent Pipeline:** Coordinates discrete agents for Scope extraction, Risk identification, Health scoring, and Document generation.
+- **Risk Lifecycle & Cross-Run Identity:** Deterministically tracks risks across analysis runs. Risks have a stable identity (via fingerprinting and token similarity), allowing tracking of status, ownership, due dates, and an immutable event history (new, escalated, stale, auto-resolved).
+- **Interactive Grounded Chat:** Ask questions about the project, powered by the Qdrant vector database and Gemini 3.5 Flash Lite.
+- **Automated Deliverable Generation:** Automatically detects and generates missing canonical documents (Executive Summary, User Stories, Risk Register, Sprint Plan).
 
 ##  Architecture
 
