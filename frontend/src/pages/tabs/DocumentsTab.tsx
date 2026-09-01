@@ -3,10 +3,12 @@ import { UploadCloud, File, Trash2, RefreshCw, X, Eye } from 'lucide-react';
 import { documentsApi } from '@/api';
 import type { DocumentRecord } from '@/types';
 import Viewer from '../../components/DocumentViewer/Viewer';
+
 export default function DocumentsTab({ projectId }: { projectId: string }) {
   const [docs, setDocs] = useState<DocumentRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -20,7 +22,6 @@ export default function DocumentsTab({ projectId }: { projectId: string }) {
 
   useEffect(() => {
     fetchDocs();
-    // Poll for status updates if any doc is pending/processing
     const interval = setInterval(() => {
       setDocs(current => {
         const needsUpdate = current.some(
@@ -35,8 +36,8 @@ export default function DocumentsTab({ projectId }: { projectId: string }) {
     return () => clearInterval(interval);
   }, [projectId]);
 
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
+  // Core file upload process shared by file picker and drag-and-drop
+  const uploadFiles = async (files: FileList | File[]) => {
     if (!files || files.length === 0) return;
 
     setUploading(true);
@@ -52,6 +53,36 @@ export default function DocumentsTab({ projectId }: { projectId: string }) {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  const handleUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      uploadFiles(e.target.files);
+    }
+  };
+
+  // Drag and Drop handlers
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isDragging) setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.currentTarget.contains(e.relatedTarget as Node)) return;
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragging(false);
+
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      uploadFiles(e.dataTransfer.files);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this document?')) return;
     try {
@@ -63,7 +94,22 @@ export default function DocumentsTab({ projectId }: { projectId: string }) {
   };
 
   return (
-    <div className="anim-fade-in">
+    <div 
+      className="anim-fade-in relative min-h-[300px] transition-all"
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
+    >
+      {/* Drag & Drop Visual Overlay */}
+      {isDragging && (
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-indigo-500 bg-[var(--bg-elevated)]/90 backdrop-blur-sm transition-all">
+          <UploadCloud size={48} className="mb-3 animate-bounce text-indigo-500" />
+          <p className="text-base font-semibold text-[var(--text-primary)]">
+            Drop your files here to upload
+          </p>
+        </div>
+      )}
+
       <div className="mb-5 flex justify-between">
         <h3 className="text-lg font-bold">Project Documents</h3>
         <button
@@ -87,9 +133,16 @@ export default function DocumentsTab({ projectId }: { projectId: string }) {
       {loading ? (
         <div className="skeleton h-[100px]" />
       ) : docs.length === 0 ? (
-        <div className="card border-dashed px-5 py-[60px] text-center">
+        <div 
+          className={`card border-dashed px-5 py-[60px] text-center transition-colors ${
+            isDragging ? 'border-indigo-500 bg-indigo-500/5' : ''
+          }`}
+        >
           <UploadCloud size={32} color="var(--text-muted)" className="mx-auto mb-4" />
-          <p className="text-(--text-secondary)">No documents uploaded yet.</p>
+          <p className="text-[var(--text-secondary)]">No documents uploaded yet.</p>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">
+            Drag & drop files here, or click Upload File above
+          </p>
         </div>
       ) : (
         <div className="flex flex-col gap-3">
@@ -100,7 +153,7 @@ export default function DocumentsTab({ projectId }: { projectId: string }) {
                 <File size={20} color="var(--accent)" className="mr-4" />
                 <div className="flex-1">
                   <div className="text-[15px] font-semibold">{doc.filename}</div>
-                  <div className="mt-1 flex gap-3 text-xs text-(--text-muted)">
+                  <div className="mt-1 flex gap-3 text-xs text-[var(--text-muted)]">
                     <span>{formatBytes(doc.file_size)}</span>
                     <span>·</span>
                     <DocStatusBadge status={doc.processing_status} />
@@ -146,7 +199,7 @@ export default function DocumentsTab({ projectId }: { projectId: string }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            margin: '25% auto',
+            margin: '0 auto',
           }}
           onClick={() => setSelectedDoc(null)}
         >
@@ -163,7 +216,6 @@ export default function DocumentsTab({ projectId }: { projectId: string }) {
               border: '1px solid var(--border-glow)',
               position: 'relative',
               margin: '0 auto',
-              marginTop: '20px',
             }}
             onClick={e => e.stopPropagation()}
           >
