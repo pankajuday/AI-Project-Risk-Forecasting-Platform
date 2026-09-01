@@ -2,10 +2,17 @@
 
 **An Advanced Platform for Comprehensive Predictive Risk Analysis using LLMs and Structured Data.**
 
-[![License: MIT](https://badgen.net/badge/License/MIT/green)](LICENSE)
-[![Status: In Development](https://badgen.net/badge/Status/In%20Development/blue)]()
-[![Python Backend](https://badgen.net/badge/Backend/Python%203.10%2B/red)](#backend)
-[![Frontend UI](https://badgen.net/badge/Frontend/React%20Vite/skyblue)](#frontend)
+[![License](https://img.shields.io/badge/License-MIT-green?style=flat-square&logo=opensourceinitiative&logoColor=white)](LICENSE)
+[![Status](https://img.shields.io/badge/Status-In%20Development-blue?style=flat-square)](#)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python&logoColor=white)](#backend)
+[![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white)](#backend)
+[![Node.js](https://img.shields.io/badge/Node.js-22%2B-339933?style=flat-square&logo=node.js&logoColor=white)](#backend)
+[![React](https://img.shields.io/badge/React-20232A?style=flat-square&logo=react&logoColor=61DAFB)](#frontend)
+[![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white)](#frontend)
+[![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=flat-square&logo=mongodb&logoColor=white)](#database)
+[![Qdrant](https://img.shields.io/badge/Qdrant-DC244C?style=flat-square&logo=qdrant&logoColor=white)](#vector-database)
+[![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat-square&logo=docker&logoColor=white)](#deployment)
+<!-- [![Redis](https://img.shields.io/badge/Redis-DC382D?style=flat-square&logo=redis&logoColor=white)](#infrastructure) --> 
 
 ##  Overview
 
