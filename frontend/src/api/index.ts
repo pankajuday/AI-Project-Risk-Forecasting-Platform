@@ -69,12 +69,3 @@ export const chatApi = {
 
   clearHistory: (projectId: string) => api.delete(`/chat/${projectId}/history`),
 };
-
-// Risks
-export const risksApi = {
-  list: (projectId: string, params?: any) => api.get(`/risks/${projectId}`, { params }),
-  getSummary: (projectId: string) => api.get(`/risks/${projectId}/summary`),
-  get: (riskId: string) => api.get(`/risks/item/${riskId}`),
-  update: (riskId: string, data: any) => api.patch(`/risks/item/${riskId}`, data),
-  addNote: (riskId: string, note: string, actor: string = "System") => api.post(`/risks/item/${riskId}/note`, { note, actor }),
-};

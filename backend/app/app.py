@@ -1,24 +1,14 @@
-import asyncio
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from config.mongodb import init_db
-from utils.maintenance import maintenance_loop
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
-    # Start the background maintenance sweep task
-    maintenance_task = asyncio.create_task(maintenance_loop())
-    try:
-        yield
-    finally:
-        maintenance_task.cancel()
-        try:
-            await maintenance_task
-        except asyncio.CancelledError:
-            pass
+    yield
 
 
 app = FastAPI(
@@ -41,10 +31,8 @@ from routes.document import router as document_router
 from routes.project import router as project_router
 from routes.analysis import router as analysis_router
 from routes.chat import router as chat_router
-from routes.risks import router as risks_router
 
 app.include_router(document_router, prefix="/v1/api/document", tags=["Documents"])
 app.include_router(project_router,  prefix="/v1/api/project",  tags=["Projects"])
 app.include_router(analysis_router, prefix="/v1/api/analysis", tags=["Analysis"])
 app.include_router(chat_router,     prefix="/v1/api/chat",     tags=["Chat"])
-app.include_router(risks_router,    prefix="/v1/api/risks",    tags=["Risks"])
