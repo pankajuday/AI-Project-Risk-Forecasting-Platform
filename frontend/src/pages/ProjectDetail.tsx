@@ -8,14 +8,12 @@ import DocumentsTab from './tabs/DocumentsTab';
 import AnalysisTab from './tabs/AnalysisTab';
 import ReportTab from './tabs/ReportTab';
 import ChatTab from './tabs/ChatTab';
-import RiskRegisterTab from './tabs/RiskRegisterTab';
-import { Shield } from 'lucide-react';
 
 export default function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
-  const [activeTab, setActiveTab] = useState<'docs' | 'analysis' | 'report' | 'chat' | 'risk-register'>('docs');
+  const [activeTab, setActiveTab] = useState<'docs' | 'analysis' | 'report' | 'chat'>('docs');
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -44,7 +42,6 @@ export default function ProjectDetail() {
     { id: 'docs', label: 'Documents', icon: <FolderOpen size={16} /> },
     { id: 'analysis', label: 'Analysis', icon: <Activity size={16} /> },
     { id: 'report', label: 'Report', icon: <FileText size={16} /> },
-    { id: 'risk-register', label: 'Risk Register', icon: <Shield size={16} /> },
     { id: 'chat', label: 'Chat', icon: <MessageSquare size={16} /> },
   ] as const;
 
@@ -113,7 +110,6 @@ export default function ProjectDetail() {
         {activeTab === 'docs' && <DocumentsTab projectId={projectId!} />}
         {activeTab === 'analysis' && <AnalysisTab projectId={projectId!} />}
         {activeTab === 'report' && <ReportTab projectId={projectId!} />}
-        {activeTab === 'risk-register' && <RiskRegisterTab projectId={projectId!} />}
         {activeTab === 'chat' && <ChatTab projectId={projectId!} />}
       </main>
     </div>
