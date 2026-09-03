@@ -28,10 +28,11 @@ export default function Layout() {
           </div>
           <div>
             <div className="text-[15px] font-extrabold tracking-[-0.02em] text-(--text-primary)">
-              Project Intel
+              AI-Driven Enterprise Project Intelligence & Risk Management Platform
             </div>
             <div className="text-[10px] font-medium text-(--text-muted)">
-              AI-Driven Enterprise Project Intelligence & Risk Management Platform
+              Upload your project documents and get instant AI-powered risk analysis, forecasts, and
+              recommendations in plain language.
             </div>
           </div>
         </Link>

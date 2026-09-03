@@ -1,8 +1,8 @@
 {
-  "name": "ai-project-risk-forecasting-platform",
+  "name": "ai-driven-enterprise-project-intelligence-risk-management-platform",
   "private": true,
   "version": "1.0.0",
-  "description": "Frontend web application for AI-Powered Project Risk Forecasting Platform",
+  "description": "Intelligent platform for project risk forecasting using RAG and multi-agent AI.",
   "author": "Pankaj Kumar",
   "license": "MIT",
   "keywords": [
