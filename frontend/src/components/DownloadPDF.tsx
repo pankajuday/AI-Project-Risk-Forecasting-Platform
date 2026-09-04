@@ -60,32 +60,125 @@ const DownloadPDF = ({
       },
 
       pagebreak: {
-        mode: ['avoid-all', 'css', 'legacy'],
-        avoid: [
-          'tr',
-          'p',
-          'li',
-          'blockquote',
-          'pre',
-          'h1',
-          'h2',
-          'h3',
-          'h4',
-          '.pdf-table-row',
-          'td',
-          'tbody',
-          'th',
-          'table',
-          'span',
-          'lo',
-          'strong',
-        ],
+        // 'css' mode honours page-break-inside/break-inside properties we inject
+        // via onclone. Using avoid-all on top causes conflicts and is unreliable.
+        mode: ['css', 'legacy'],
+      },
+    };
+
+    // Inject a <style> block into the hidden element to override any oklch values
+    // that leak from global CSS variables, replacing them with safe hex equivalents.
+    const patchStyleId = '__pdf_oklch_patch__';
+    if (!document.getElementById(patchStyleId)) {
+      const patchStyle = document.createElement('style');
+      patchStyle.id = patchStyleId;
+      // Override the most common CSS custom properties that use oklch with safe hex fallbacks
+      patchStyle.textContent = `
+        #${element.id ?? '__pdf_root__'}, #${element.id ?? '__pdf_root__'} * {
+          --background: #ffffff !important;
+          --foreground: #111827 !important;
+          --card: #ffffff !important;
+          --card-foreground: #111827 !important;
+          --popover: #ffffff !important;
+          --popover-foreground: #111827 !important;
+          --primary: #2563eb !important;
+          --primary-foreground: #ffffff !important;
+          --secondary: #f3f4f6 !important;
+          --secondary-foreground: #111827 !important;
+          --muted: #f3f4f6 !important;
+          --muted-foreground: #6b7280 !important;
+          --accent: #eff6ff !important;
+          --accent-foreground: #1e3a8a !important;
+          --border: #d1d5db !important;
+          --input: #d1d5db !important;
+          --ring: #2563eb !important;
+        }
+      `;
+      document.head.appendChild(patchStyle);
+    }
+
+    const optionsWithClone = {
+      ...options,
+      html2canvas: {
+        ...options.html2canvas,
+        onclone: (_clonedDoc: Document) => {
+          // ── 1. Strip oklch rules ─────────────────────────────────────────────
+          // html2canvas's CSS parser can't handle oklch() from Tailwind v4.
+          // Delete any stylesheet rule that contains it before rendering.
+          try {
+            const sheets = Array.from(_clonedDoc.styleSheets);
+            for (const sheet of sheets) {
+              try {
+                const rules = Array.from(sheet.cssRules ?? []);
+                for (let i = rules.length - 1; i >= 0; i--) {
+                  if (rules[i].cssText?.includes('oklch')) {
+                    sheet.deleteRule(i);
+                  }
+                }
+              } catch {
+                // Cross-origin or locked sheets — skip silently.
+              }
+            }
+          } catch {
+            // Best-effort.
+          }
+
+          // ── 2. Inject page-break guards ──────────────────────────────────────
+          // Apply break-inside:avoid to every element that should never be split
+          // across a PDF page boundary. This is the most reliable approach:
+          // it works at CSS level which html2pdf respects when slicing pages.
+          try {
+            const breakGuard = _clonedDoc.createElement('style');
+            breakGuard.id = '__pdf_break_guard__';
+            breakGuard.textContent = `
+              /* Prevent any block-level content from being sliced mid-element */
+              p, li, blockquote, pre, code,
+              h1, h2, h3, h4, h5, h6,
+              tr, td, th, thead, tbody, tfoot,
+              figure, figcaption, img, dl, dt, dd {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+              }
+
+              /* Keep headings glued to the content that follows them */
+              h1, h2, h3, h4, h5, h6 {
+                page-break-after: avoid !important;
+                break-after: avoid !important;
+              }
+
+              /* Tables: try to keep the whole table together where possible,
+                 and never break inside a row */
+              table {
+                page-break-inside: auto !important;
+                break-inside: auto !important;
+              }
+              tr {
+                page-break-inside: avoid !important;
+                break-inside: avoid !important;
+              }
+
+              /* Block elements with potential overflow: ensure they are
+                 visible and don't clip content within a page */
+              pre, blockquote {
+                overflow: visible !important;
+                white-space: pre-wrap !important;
+                word-break: break-word !important;
+              }
+            `;
+            _clonedDoc.head.appendChild(breakGuard);
+          } catch {
+            // Best-effort — don't block PDF generation.
+          }
+        },
       },
     };
 
     try {
-      await html2pdf().set(options).from(element).save();
+      await html2pdf().set(optionsWithClone).from(element).save();
+      // Clean up the injected patch style
+      document.getElementById(patchStyleId)?.remove();
     } catch (error) {
+      document.getElementById(patchStyleId)?.remove();
       console.error('PDF generation failed:', error);
     } finally {
       setIsGenerating(false);

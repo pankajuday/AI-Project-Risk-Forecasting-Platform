@@ -1,123 +1,112 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { ChevronLeft, FolderOpen, Activity, FileText, MessageSquare } from 'lucide-react';
 import { projectsApi } from '@/api';
 import type { Project } from '@/types';
 
+import { SidebarProvider, SidebarInset } from '@/components/ui/sidebar';
+import Sidebar, { type TabId } from '@/components/Layout/Sidebar';
+import Top from '@/components/Layout/Top';
+
+import OverviewTab from './tabs/OverviewTab';
 import DocumentsTab from './tabs/DocumentsTab';
 import AnalysisTab from './tabs/AnalysisTab';
 import ReportTab from './tabs/ReportTab';
+import GeneratedDataTab from './tabs/GeneratedDataTab';
 import ChatTab from './tabs/ChatTab';
+import ProjectSettingsTab from './tabs/ProjectSettingsTab';
+
+const TAB_LABELS: Record<TabId, string> = {
+  overview: 'Overview',
+  docs: 'Documents',
+  analysis: 'Analysis',
+  data: 'Generated Document',
+  report: 'Reports',
+  chat: 'Chat',
+  settings: 'Settings',
+};
 
 export default function ProjectDetail() {
   const { projectId } = useParams<{ projectId: string }>();
   const navigate = useNavigate();
   const [project, setProject] = useState<Project | null>(null);
-  const [activeTab, setActiveTab] = useState<'docs' | 'analysis' | 'report' | 'chat'>('docs');
+  const [activeTab, setActiveTab] = useState<TabId>('overview');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const fetchProject = useCallback(() => {
     if (!projectId) return;
     projectsApi
       .get(projectId)
       .then(res => setProject(res.data))
       .catch(err => {
         console.error(err);
-        navigate('/projects'); // redirect if not found
+        navigate('/projects');
       })
       .finally(() => setLoading(false));
   }, [projectId, navigate]);
 
+  useEffect(() => {
+    fetchProject();
+  }, [fetchProject]);
+
   if (loading) {
     return (
-      <div className="p-8">
-        <div className="skeleton h-65" />
+      <div className="flex h-screen w-screen items-center justify-center bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="size-8 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
+          <span className="text-xs text-muted-foreground font-medium">Loading workspace...</span>
+        </div>
       </div>
     );
   }
 
   if (!project) return null;
 
-  const tabs = [
-    { id: 'docs', label: 'Documents', icon: <FolderOpen size={16} /> },
-    { id: 'analysis', label: 'Analysis', icon: <Activity size={16} /> },
-    { id: 'report', label: 'Report', icon: <FileText size={16} /> },
-    { id: 'chat', label: 'Chat', icon: <MessageSquare size={16} /> },
-  ] as const;
+  const breadcrumb = [
+    { label: 'Projects', onClick: () => navigate('/projects') },
+    { label: project.name, onClick: () => setActiveTab('overview') },
+    ...(activeTab !== 'overview' ? [{ label: TAB_LABELS[activeTab] }] : []),
+  ];
 
   return (
-    <div className="anim-fade-up flex flex-wrap items-start gap-6">
-      {/*  Project Details Sidebar  */}
-      <aside className="flex w-65 shrink-0 flex-col gap-4">
-        {/* Back link & Project Card */}
-        <div className="card flex flex-col gap-3.5 p-4.5">
-          <button
-            className="btn btn-ghost -ml-1 self-start border-0 px-2 py-1 text-xs"
-            onClick={() => navigate('/projects')}
+    <SidebarProvider defaultOpen={true}>
+      <div className="flex h-screen w-full bg-background text-foreground overflow-hidden">
+        {/* Side Component */}
+        <Sidebar
+          project={project}
+          activeTab={activeTab}
+          onTabChange={tab => setActiveTab(tab)}
+          onNewProject={() => navigate('/projects/new')}
+        />
+
+        {/* Top & Main Container */}
+        <SidebarInset className="flex flex-col flex-1 min-w-0 h-full bg-background overflow-hidden">
+          {/* Top Component */}
+          <Top breadcrumb={breadcrumb} />
+
+          {/* Main Component Render Area */}
+          <main
+            className={`flex-1 overflow-y-auto overflow-x-hidden p-6 ${
+              activeTab === 'chat' ? '!p-0 flex flex-col overflow-hidden' : ''
+            }`}
           >
-            <ChevronLeft size={15} /> Projects
-          </button>
-
-          <div>
-            <h1 className="mb-1.5 text-xl leading-[1.3] font-extrabold">{project.name}</h1>
-            {project.description && (
-              <p className="m-0 text-[12.5px] leading-normal text-(--text-muted)">
-                {project.description}
-              </p>
+            {activeTab === 'overview' && (
+              <OverviewTab project={project} onTabChange={tab => setActiveTab(tab as TabId)} />
             )}
-          </div>
-
-          {project.current_health_score != null && (
-            <div className="flex items-center justify-between rounded-[10px] border border-(--border) bg-(--bg-elevated) px-3.5 py-2.5">
-              <div className="text-xs font-semibold text-(--text-secondary)">Health Score</div>
-              <div
-                className={`text-xl font-extrabold ${getHealthColor(project.current_health_score)}`}
-              >
-                {project.current_health_score}/100
+            {activeTab === 'docs' && <DocumentsTab projectId={projectId!} />}
+            {activeTab === 'analysis' && <AnalysisTab projectId={projectId!} />}
+            {activeTab === 'data' && <GeneratedDataTab projectId={projectId!} />}
+            {activeTab === 'report' && <ReportTab projectId={projectId!} />}
+            {activeTab === 'chat' && (
+              <div className="flex flex-1 flex-col overflow-hidden p-6">
+                <ChatTab projectId={projectId!} />
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* Sidebar Tabs List */}
-        <div className="card flex flex-col gap-1 p-2">
-          <div className="px-3 pt-2 pb-1.5 text-[10.5px] font-bold tracking-[0.08em] text-(--text-muted) uppercase">
-            Project Views
-          </div>
-          {tabs.map(t => {
-            const isActive = activeTab === t.id;
-            return (
-              <button
-                key={t.id}
-                onClick={() => setActiveTab(t.id as any)}
-                className={`flex w-full items-center gap-3 rounded-[10px] border px-3.5 py-2.75 text-left text-[13.5px] transition-all duration-200 ${isActive ? 'border-indigo-500/30 bg-(--accent-soft) font-bold text-indigo-300' : 'border-transparent font-medium text-(--text-secondary)'}`}
-              >
-                <span className={isActive ? 'text-indigo-400' : 'text-(--text-muted)'}>
-                  {t.icon}
-                </span>
-                <span className="flex-1">{t.label}</span>
-                {isActive && (
-                  <div className="size-1.5 rounded-full bg-indigo-400 shadow-[0_0_8px_#818cf8]" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </aside>
-
-      {/*  Active Tab Content Area  */}
-      <main className="min-w-[320px] flex-1">
-        {activeTab === 'docs' && <DocumentsTab projectId={projectId!} />}
-        {activeTab === 'analysis' && <AnalysisTab projectId={projectId!} />}
-        {activeTab === 'report' && <ReportTab projectId={projectId!} />}
-        {activeTab === 'chat' && <ChatTab projectId={projectId!} />}
-      </main>
-    </div>
+            )}
+            {activeTab === 'settings' && (
+              <ProjectSettingsTab project={project} onProjectUpdated={fetchProject} />
+            )}
+          </main>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
   );
-}
-
-function getHealthColor(score: number) {
-  if (score >= 70) return 'text-(--success)';
-  if (score >= 40) return 'text-(--warning)';
-  return 'text-(--danger)';
 }
