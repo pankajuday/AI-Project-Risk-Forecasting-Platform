@@ -50,10 +50,10 @@ export default function ProjectDetail() {
 
   if (loading) {
     return (
-      <div className="flex h-screen w-screen items-center justify-center bg-background">
+      <div className="bg-background flex h-screen w-screen items-center justify-center">
         <div className="flex flex-col items-center gap-3">
           <div className="size-8 animate-spin rounded-full border-2 border-indigo-500 border-t-transparent" />
-          <span className="text-xs text-muted-foreground font-medium">Loading workspace...</span>
+          <span className="text-muted-foreground text-xs font-medium">Loading workspace...</span>
         </div>
       </div>
     );
@@ -69,7 +69,7 @@ export default function ProjectDetail() {
 
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="flex h-screen w-full bg-background text-foreground overflow-hidden">
+      <div className="bg-background text-foreground flex h-screen w-full overflow-hidden">
         {/* Side Component */}
         <Sidebar
           project={project}
@@ -79,14 +79,14 @@ export default function ProjectDetail() {
         />
 
         {/* Top & Main Container */}
-        <SidebarInset className="flex flex-col flex-1 min-w-0 h-full bg-background overflow-hidden">
+        <SidebarInset className="bg-background flex h-full min-w-0 flex-1 flex-col overflow-hidden">
           {/* Top Component */}
           <Top breadcrumb={breadcrumb} />
 
           {/* Main Component Render Area */}
           <main
-            className={`flex-1 overflow-y-auto overflow-x-hidden p-6 ${
-              activeTab === 'chat' ? '!p-0 flex flex-col overflow-hidden' : ''
+            className={`flex-1 overflow-x-hidden overflow-y-auto p-6 ${
+              activeTab === 'chat' ? 'flex flex-col overflow-hidden p-0!' : ''
             }`}
           >
             {activeTab === 'overview' && (
