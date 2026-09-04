@@ -5,6 +5,7 @@ import { projectsApi, documentsApi } from '@/api';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { toast } from 'sonner';
 
 export default function CreateProject() {
   const [name, setName] = useState('');
@@ -76,7 +77,7 @@ export default function CreateProject() {
       navigate(`/projects/${newProjectId}`);
     } catch (error) {
       console.error(error);
-      alert('Failed to create project or upload documents');
+      toast('Failed to create project or upload documents');
     } finally {
       setLoading(false);
     }

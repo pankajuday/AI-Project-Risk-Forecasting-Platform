@@ -112,7 +112,7 @@ export default function GeneratedDataTab({ projectId }: { projectId: string }) {
           {generatedDocs.map((doc, idx) => (
             <Card
               key={idx}
-              className="group hover:border-foreground/20 relative flex flex-col justify-between !overflow-visible p-4 transition-all duration-200 hover:shadow-xs sm:flex-row sm:items-center"
+              className="group hover:border-foreground/20 relative flex flex-col justify-between overflow-visible! p-4 transition-all duration-200 hover:shadow-xs sm:flex-row sm:items-center"
             >
               {/* Info */}
               <div className="flex min-w-0 flex-1 items-center gap-3.5">
