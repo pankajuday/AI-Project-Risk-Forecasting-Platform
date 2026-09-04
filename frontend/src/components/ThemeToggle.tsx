@@ -1,21 +1,21 @@
 import React from 'react';
 import { Sun, Moon } from 'lucide-react';
-import { useTheme } from '@/Context/ThemeContext';
+import { useTheme } from 'next-themes';
 
 export const ThemeToggle: React.FC = () => {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   return (
     <button
-      onClick={toggleTheme}
+      onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
       type="button"
-      className="cursor-pointer rounded-lg bg-gray-200 p-2 text-gray-800 transition-colors hover:bg-gray-300 focus:outline-none dark:bg-gray-800 dark:text-gray-200 dark:hover:bg-gray-700"
+      className="cursor-pointer rounded-lg border border-border bg-muted/50 p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none"
       aria-label="Toggle theme"
     >
       {theme === 'dark' ? (
-        <Sun className="h-5 w-5 text-yellow-400" />
+        <Sun className="h-4 w-4 text-amber-400" />
       ) : (
-        <Moon className="h-5 w-5 text-slate-700" />
+        <Moon className="h-4 w-4 text-indigo-400" />
       )}
     </button>
   );

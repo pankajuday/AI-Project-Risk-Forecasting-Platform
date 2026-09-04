@@ -1,7 +1,10 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router';
-import { Plus, ChevronLeft, UploadCloud, FileText, X } from 'lucide-react';
+import { Plus, ChevronLeft, UploadCloud, FileText, X, Loader2 } from 'lucide-react';
 import { projectsApi, documentsApi } from '@/api';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 
 export default function CreateProject() {
   const [name, setName] = useState('');
@@ -80,136 +83,153 @@ export default function CreateProject() {
   };
 
   return (
-    <div className="anim-fade-up mx-auto mt-10 max-w-xl">
-      <button className="btn btn-ghost mb-6 px-3 py-1.5" onClick={() => navigate('/projects')}>
-        <ChevronLeft size={16} /> Back to Projects
-      </button>
+    <div className="anim-fade-up mx-auto max-w-xl space-y-4 py-6">
+      {/* Back Button */}
+      <Button
+        variant="ghost"
+        size="sm"
+        className="gap-1 text-xs text-muted-foreground hover:text-foreground"
+        onClick={() => navigate('/projects')}
+      >
+        <ChevronLeft size={16} />
+        <span>Back to Projects</span>
+      </Button>
 
-      <div className="card">
-        <h1 className="mb-2 text-2xl font-extrabold">Create New Project</h1>
-        <p className="mb-6 text-(--text-muted)">Start a new AI-powered risk analysis workspace.</p>
+      {/* Main Card Form */}
+      <Card className="border-border shadow-sm">
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-xl font-bold text-foreground">Create New Project</CardTitle>
+          <CardDescription className="text-xs text-muted-foreground">
+            Start a new AI-powered risk analysis workspace and attach project documents.
+          </CardDescription>
+        </CardHeader>
 
         <form onSubmit={handleSubmit}>
-          <div className="mb-5">
-            <label className="mb-2 block text-[13px] font-semibold text-(--text-secondary)">
-              Project Name *
-            </label>
-            <input
-              type="text"
-              className="input"
-              placeholder="e.g. Q3 Migration Project"
-              value={name}
-              onChange={e => setName(e.target.value)}
-              required
-              autoFocus
-            />
-          </div>
-
-          <div className="mb-5">
-            <label className="mb-2 block text-[13px] font-semibold text-(--text-secondary)">
-              Description
-            </label>
-            <textarea
-              placeholder="Briefly describe the project goals..."
-              value={description}
-              onChange={e => setDescription(e.target.value)}
-              rows={3}
-              className="input resize-y"
-            />
-          </div>
-
-          {/* Drag and Drop Zone */}
-          <div className="mb-6">
-            <label className="mb-2 block text-[13px] font-semibold text-(--text-secondary)">
-              Project Documents
-            </label>
-
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              multiple
-              className="hidden"
-              accept=".pdf,.docx,.txt,.csv"
-            />
-
-            <div
-              onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              onDrop={handleDrop}
-              onClick={() => fileInputRef.current?.click()}
-              className={`flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed p-6 transition-all ${
-                isDragging
-                  ? 'border-(--accent) bg-(--accent-soft)'
-                  : 'border-(--border) bg-(--bg-elevated) hover:border-(--border-glow)'
-              }`}
-            >
-              <div className="mb-2 rounded-full bg-(--bg-overlay) p-3 text-(--accent)">
-                <UploadCloud size={24} />
-              </div>
-              <p className="text-sm font-semibold text-(--text-primary)">
-                Click to upload{' '}
-                <span className="font-normal text-(--text-muted)">or drag & drop</span>
-              </p>
-              <p className="mt-1 text-xs text-(--text-muted)">
-                PDF, DOCX, TXT, CSV (Max 10MB per file)
-              </p>
+          <CardContent className="space-y-5">
+            {/* Project Name Field */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground">
+                Project Name <span className="text-destructive">*</span>
+              </label>
+              <Input
+                type="text"
+                placeholder="e.g. Q3 Migration Project"
+                value={name}
+                onChange={e => setName(e.target.value)}
+                required
+                autoFocus
+                className="text-xs"
+              />
             </div>
 
-            {/* Uploaded Files List */}
-            {files.length > 0 && (
-              <div className="mt-4 space-y-2">
-                {files.map((file, idx) => (
-                  <div
-                    key={idx}
-                    className="flex items-center justify-between rounded-lg border border-(--border) bg-(--bg-surface) px-3 py-2 text-xs"
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      <FileText size={16} className="text-(--accent)" />
-                      <span className="truncate font-medium text-(--text-primary)">
-                        {file.name}
-                      </span>
-                      <span className="text-(--text-muted)">
-                        ({(file.size / (1024 * 1024)).toFixed(2)} MB)
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={e => {
-                        e.stopPropagation();
-                        removeFile(idx);
-                      }}
-                      className="rounded p-1 text-(--text-muted) hover:bg-(--bg-overlay) hover:text-(--danger)"
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
+            {/* Description Field */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground">Description</label>
+              <textarea
+                placeholder="Briefly describe the project goals and scope..."
+                value={description}
+                onChange={e => setDescription(e.target.value)}
+                rows={3}
+                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-xs shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+              />
+            </div>
 
-          <div className="flex justify-end gap-3">
-            <button
+            {/* Drag and Drop Upload Zone */}
+            <div className="space-y-2">
+              <label className="text-xs font-semibold text-foreground">Project Documents</label>
+
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileChange}
+                multiple
+                className="hidden"
+                accept=".pdf,.docx,.txt,.csv"
+              />
+
+              <div
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+                onClick={() => fileInputRef.current?.click()}
+                className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 text-center transition-all ${
+                  isDragging
+                    ? 'border-foreground bg-muted'
+                    : 'border-border bg-muted/30 hover:border-foreground/40 hover:bg-muted/60'
+                }`}
+              >
+                <div className="mb-2 rounded-full border border-border bg-background p-2.5 text-foreground shadow-xs">
+                  <UploadCloud size={20} />
+                </div>
+                <p className="text-xs font-semibold text-foreground">
+                  Click to upload <span className="font-normal text-muted-foreground">or drag & drop</span>
+                </p>
+                <p className="mt-1 text-[11px] text-muted-foreground">
+                  PDF, DOCX, TXT, CSV (Max 10MB per file)
+                </p>
+              </div>
+
+              {/* Uploaded Files List */}
+              {files.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {files.map((file, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between rounded-md border border-border bg-muted/40 px-3 py-2 text-xs"
+                    >
+                      <div className="flex items-center gap-2 truncate min-w-0">
+                        <FileText size={14} className="text-muted-foreground shrink-0" />
+                        <span className="truncate font-medium text-foreground">{file.name}</span>
+                        <span className="text-[10px] text-muted-foreground shrink-0">
+                          ({(file.size / (1024 * 1024)).toFixed(2)} MB)
+                        </span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={e => {
+                          e.stopPropagation();
+                          removeFile(idx);
+                        }}
+                        className="h-6 w-6 text-muted-foreground hover:text-destructive shrink-0"
+                      >
+                        <X size={13} />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </CardContent>
+
+          <CardFooter className="flex justify-end gap-2 border-t border-border pt-4">
+            <Button
               type="button"
-              className="btn btn-ghost"
+              variant="outline"
+              size="sm"
               onClick={() => navigate('/projects')}
               disabled={loading}
+              className="text-xs"
             >
               Cancel
-            </button>
-            <button type="submit" className="btn btn-primary" disabled={loading || !name.trim()}>
+            </Button>
+            <Button type="submit" size="sm" disabled={loading || !name.trim()} className="text-xs gap-1.5">
               {loading ? (
-                <>Creating...</>
+                <>
+                  <Loader2 size={14} className="animate-spin" />
+                  <span>Creating...</span>
+                </>
               ) : (
                 <>
-                  <Plus size={16} /> Create Project
+                  <Plus size={14} />
+                  <span>Create Project</span>
                 </>
               )}
-            </button>
-          </div>
+            </Button>
+          </CardFooter>
         </form>
-      </div>
+      </Card>
     </div>
   );
 }

@@ -1,8 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { UploadCloud, File, Trash2, RefreshCw, X, Eye, AlertTriangle } from 'lucide-react';
+import { UploadCloud, FileText, Trash2, RefreshCw, X, Eye, AlertTriangle, CheckCircle2, Clock } from 'lucide-react';
 import { documentsApi } from '@/api';
 import type { DocumentRecord } from '@/types';
 import Viewer from '../../components/DocumentViewer/Viewer';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 
 /** Shape of a per-file validation failure returned by the backend (HTTP 422). */
 interface UploadError {
@@ -126,31 +130,49 @@ export default function DocumentsTab({ projectId }: { projectId: string }) {
 
   return (
     <div
-      className="anim-fade-in relative min-h-75 transition-all"
+      className="relative min-h-[300px] space-y-6 transition-all"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
       {/* Drag & Drop Visual Overlay */}
       {isDragging && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-indigo-500 bg-(--bg-elevated)/90 backdrop-blur-sm transition-all">
-          <UploadCloud size={48} className="mb-3 animate-bounce text-indigo-500" />
-          <p className="text-base font-semibold text-(--text-primary)">
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-primary bg-background/90 backdrop-blur-sm transition-all duration-200">
+          <div className="p-4 rounded-full bg-primary/10 mb-3 animate-bounce">
+            <UploadCloud className="size-8 text-primary" />
+          </div>
+          <p className="text-base font-semibold text-foreground">
             Drop your files here to upload
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Supports PDF, DOCX, TXT, CSV, XLSX, PPTX
           </p>
         </div>
       )}
 
-      <div className="mb-5 flex justify-between">
-        <h3 className="text-lg font-bold">Project Documents</h3>
-        <button
-          className="btn btn-primary"
+      {/* Header section */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2.5">
+            <h2 className="text-xl font-semibold tracking-tight text-foreground">Project Documents</h2>
+            {!loading && docs.length > 0 && (
+              <Badge variant="secondary" className="rounded-full px-2.5 py-0.5 text-xs font-medium">
+                {docs.length} {docs.length === 1 ? 'file' : 'files'}
+              </Badge>
+            )}
+          </div>
+          <p className="text-sm text-muted-foreground mt-1">
+            Upload specifications, architecture diagrams, and project files for AI risk analysis and RAG retrieval.
+          </p>
+        </div>
+        <Button
           onClick={() => fileInputRef.current?.click()}
           disabled={uploading}
+          className="shrink-0 gap-2 cursor-pointer"
         >
-          {uploading ? <RefreshCw size={15} className="anim-spin" /> : <UploadCloud size={15} />}
-          {uploading ? 'Uploading...' : 'Upload File'}
-        </button>
+          {uploading ? <RefreshCw className="size-4 animate-spin" /> : <UploadCloud className="size-4" />}
+          {uploading ? 'Uploading...' : 'Upload Document'}
+        </Button>
         <input
           type="file"
           ref={fileInputRef}
@@ -163,156 +185,148 @@ export default function DocumentsTab({ projectId }: { projectId: string }) {
 
       {/* Per-file validation error banners */}
       {uploadErrors.length > 0 && (
-        <div className="mb-4 flex flex-col gap-2">
+        <div className="space-y-2">
           {uploadErrors.map((e, idx) => (
             <div
               key={idx}
-              className="flex items-start gap-3 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm"
+              className="flex items-start gap-3 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm"
             >
-              <AlertTriangle size={16} className="mt-0.5 shrink-0 text-red-400" />
-              <div className="min-w-0">
-                <span className="font-semibold text-red-400">{e.filename}: </span>
-                <span className="text-(--text-secondary)">{e.message}</span>
+              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-destructive" />
+              <div className="min-w-0 flex-1">
+                <span className="font-semibold text-destructive">{e.filename}: </span>
+                <span className="text-muted-foreground">{e.message}</span>
               </div>
-              <button
-                className="ml-auto shrink-0 text-(--text-muted) hover:text-(--text-primary)"
+              <Button
+                variant="ghost"
+                size="icon-xs"
+                className="shrink-0 text-muted-foreground hover:text-foreground cursor-pointer"
                 onClick={() => setUploadErrors(prev => prev.filter((_, i) => i !== idx))}
                 aria-label="Dismiss error"
               >
-                <X size={14} />
-              </button>
+                <X className="size-3.5" />
+              </Button>
             </div>
           ))}
         </div>
       )}
 
+      {/* Document List / Empty / Loading State */}
       {loading ? (
-        <div className="skeleton h-25" />
-      ) : docs.length === 0 ? (
-        <div
-          className={`card border-dashed px-5 py-15 text-center transition-colors ${
-            isDragging ? 'border-indigo-500 bg-indigo-500/5' : ''
-          }`}
-        >
-          <UploadCloud size={32} color="var(--text-muted)" className="mx-auto mb-4" />
-          <p className="text-(--text-secondary)">No documents uploaded yet.</p>
-          <p className="mt-1 text-xs text-(--text-muted)">
-            Drag & drop files here, or click Upload File above
-          </p>
+        <div className="space-y-3">
+          <Skeleton className="h-16 w-full rounded-xl" />
+          <Skeleton className="h-16 w-full rounded-xl" />
+          <Skeleton className="h-16 w-full rounded-xl" />
         </div>
+      ) : docs.length === 0 ? (
+        <Card className={`border-dashed py-12 text-center transition-colors ${
+          isDragging ? 'border-primary bg-primary/5' : 'bg-card/50'
+        }`}>
+          <CardContent className="flex flex-col items-center justify-center p-6 text-center">
+            <div className="p-3 rounded-full bg-muted/60 mb-4">
+              <UploadCloud className="size-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-base font-medium text-foreground">No documents uploaded yet</h3>
+            <p className="mt-1 text-sm text-muted-foreground max-w-sm">
+              Drag and drop project files here, or click the button below to upload documents for RAG context extraction.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="mt-4 gap-2 cursor-pointer"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <UploadCloud className="size-4" />
+              Select Files
+            </Button>
+          </CardContent>
+        </Card>
       ) : (
-        <div className="flex flex-col gap-3">
+        <div className="space-y-3">
           {docs.map(doc => {
             const docId = doc.id || (doc as any)._id;
             return (
-              <div key={docId} className="card flex items-center px-5 py-3">
-                <File size={20} color="var(--accent)" className="mr-4" />
-                <div className="flex-1">
-                  <div className="text-[15px] font-semibold">{doc.filename}</div>
-                  <div className="mt-1 flex gap-3 text-xs text-(--text-muted)">
-                    <span>{formatBytes(doc.file_size)}</span>
-                    <span>·</span>
-                    <DocStatusBadge status={doc.processing_status} />
-                    {doc.processing_status === 'completed' && (
-                      <>
-                        <span>·</span>
-                        <span>{doc.chunk_count} chunks</span>
-                      </>
-                    )}
+              <Card
+                key={docId}
+                className="group flex flex-col sm:flex-row sm:items-center justify-between p-4 transition-all duration-200 hover:border-foreground/20 hover:shadow-sm"
+              >
+                <div className="flex items-center gap-3.5 min-w-0 flex-1">
+                  <div className="p-2.5 rounded-lg bg-muted/60 text-muted-foreground group-hover:text-foreground transition-colors shrink-0">
+                    <FileText className="size-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-sm font-medium text-foreground truncate group-hover:text-foreground">
+                      {doc.filename}
+                    </div>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                      <span>{formatBytes(doc.file_size)}</span>
+                      <span>•</span>
+                      <DocStatusBadge status={doc.processing_status} />
+                      {doc.processing_status === 'completed' && (
+                        <>
+                          <span>•</span>
+                          <span className="text-muted-foreground">{doc.chunk_count} chunks</span>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    className="btn btn-ghost px-2.5 py-1.5"
+
+                <div className="flex items-center gap-2 mt-3 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-border justify-end">
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={() => setSelectedDoc(doc.filename)}
                     title="Preview Document"
+                    className="text-muted-foreground hover:text-foreground cursor-pointer"
                   >
-                    <Eye />
-                  </button>
-                  <button
-                    className="btn btn-ghost px-2.5 py-1.5"
+                    <Eye className="size-4" />
+                    <span className="sr-only">Preview</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
                     onClick={() => handleDelete(docId)}
                     title="Delete Document"
+                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 cursor-pointer"
                   >
-                    <Trash2 size={16} color="#ef4444" />
-                  </button>
+                    <Trash2 className="size-4" />
+                    <span className="sr-only">Delete</span>
+                  </Button>
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
       )}
 
+      {/* Preview Modal - Preserved Original Component */}
       {selectedDoc && (
         <div
-          className="anim-fade-in"
-          style={{
-            position: 'fixed',
-            inset: 0,
-            zIndex: 9999,
-            background: 'rgba(2, 4, 14, 0.82)',
-            backdropFilter: 'blur(8px)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            margin: '25% auto',
-          }}
+          className="anim-fade-in fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4"
           onClick={() => setSelectedDoc(null)}
         >
           <div
-            className="card"
-            style={{
-              width: 'min(900px, 94vw)',
-              height: 'min(75vh, 660px)',
-              display: 'flex',
-              flexDirection: 'column',
-              padding: 0,
-              overflow: 'hidden',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.8)',
-              border: '1px solid var(--border-glow)',
-              position: 'relative',
-              margin: '0 auto',
-            }}
+            className="card w-full max-w-4xl max-h-[85vh] h-[660px] flex flex-col p-0 overflow-hidden shadow-2xl border border-indigo-500/30 relative mx-auto"
             onClick={e => e.stopPropagation()}
           >
             {/* Modal Header */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '12px 18px',
-                borderBottom: '1px solid var(--border)',
-                background: 'var(--bg-elevated)',
-                flexShrink: 0,
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                <File size={18} color="var(--accent-glow)" />
-                <span
-                  style={{
-                    fontWeight: 700,
-                    fontSize: 14,
-                    color: 'var(--text-primary)',
-                    whiteSpace: 'nowrap',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
+            <div className="flex items-center justify-between px-4 py-3 border-b border-(--border) bg-(--bg-elevated) shrink-0">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <FileText size={18} className="text-indigo-400 shrink-0" />
+                <span className="font-bold text-sm text-(--text-primary) truncate">
                   {selectedDoc}
                 </span>
               </div>
               <button
-                className="btn btn-ghost"
-                style={{ padding: '5px 12px', fontSize: 12 }}
+                className="btn btn-ghost px-3 py-1.5 text-xs text-zinc-400 hover:text-white"
                 onClick={() => setSelectedDoc(null)}
               >
-                <X />
+                <X size={16} />
               </button>
             </div>
 
             {/* Viewer Content */}
-            <div style={{ flex: 1, minHeight: 0, position: 'relative' }}>
+            <div className="flex-1 min-h-0 relative">
               <Viewer projectId={projectId} filename={selectedDoc} />
             </div>
           </div>
@@ -323,14 +337,36 @@ export default function DocumentsTab({ projectId }: { projectId: string }) {
 }
 
 function DocStatusBadge({ status }: { status: string }) {
-  const map: Record<string, { label: string; color: string }> = {
-    pending: { label: 'Pending', color: 'muted' },
-    processing: { label: 'Ingesting...', color: 'indigo' },
-    completed: { label: 'Indexed', color: 'green' },
-    failed: { label: 'Failed', color: 'red' },
-  };
-  const config = map[status] || { label: status, color: 'muted' };
-  return <span className={`badge badge-${config.color}`}>{config.label}</span>;
+  switch (status) {
+    case 'completed':
+      return (
+        <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-400 gap-1 text-[11px] px-2 py-0.5 font-normal">
+          <CheckCircle2 className="size-3 text-emerald-400" />
+          Indexed
+        </Badge>
+      );
+    case 'processing':
+      return (
+        <Badge variant="outline" className="border-amber-500/30 bg-amber-500/10 text-amber-400 gap-1 text-[11px] px-2 py-0.5 font-normal">
+          <RefreshCw className="size-3 animate-spin text-amber-400" />
+          Ingesting...
+        </Badge>
+      );
+    case 'failed':
+      return (
+        <Badge variant="destructive" className="gap-1 text-[11px] px-2 py-0.5 font-normal">
+          <AlertTriangle className="size-3" />
+          Failed
+        </Badge>
+      );
+    default:
+      return (
+        <Badge variant="outline" className="gap-1 text-[11px] px-2 py-0.5 font-normal text-muted-foreground">
+          <Clock className="size-3" />
+          Pending
+        </Badge>
+      );
+  }
 }
 
 function formatBytes(bytes: number) {
@@ -340,3 +376,4 @@ function formatBytes(bytes: number) {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
+
