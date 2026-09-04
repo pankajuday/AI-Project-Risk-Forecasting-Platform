@@ -1,8 +1,29 @@
 import { useState, useEffect, useRef } from 'react';
-import { UploadCloud, File, Trash2, RefreshCw, X, Eye } from 'lucide-react';
+import { UploadCloud, File, Trash2, RefreshCw, X, Eye, AlertTriangle } from 'lucide-react';
 import { documentsApi } from '@/api';
 import type { DocumentRecord } from '@/types';
 import Viewer from '../../components/DocumentViewer/Viewer';
+
+/** Shape of a per-file validation failure returned by the backend (HTTP 422). */
+interface UploadError {
+  filename: string;
+  message: string;
+}
+
+/** Extract a user-friendly message from an Axios error response. */
+function extractUploadErrorMessage(err: unknown): string {
+  if (err && typeof err === 'object' && 'response' in err) {
+    const res = (
+      err as { response?: { data?: { detail?: { message?: string; code?: string } | string } } }
+    ).response;
+    const detail = res?.data?.detail;
+    if (detail && typeof detail === 'object' && detail.message) {
+      return detail.message;
+    }
+    if (typeof detail === 'string') return detail;
+  }
+  return 'Upload failed. Please try again.';
+}
 
 export default function DocumentsTab({ projectId }: { projectId: string }) {
   const [docs, setDocs] = useState<DocumentRecord[]>([]);
@@ -10,6 +31,7 @@ export default function DocumentsTab({ projectId }: { projectId: string }) {
   const [uploading, setUploading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedDoc, setSelectedDoc] = useState<string | null>(null);
+  const [uploadErrors, setUploadErrors] = useState<UploadError[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchDocs = () => {
@@ -41,13 +63,22 @@ export default function DocumentsTab({ projectId }: { projectId: string }) {
     if (!files || files.length === 0) return;
 
     setUploading(true);
+    setUploadErrors([]); // clear previous errors
+    const newErrors: UploadError[] = [];
+
     for (let i = 0; i < files.length; i++) {
       try {
         await documentsApi.upload(projectId, files[i]);
       } catch (err) {
         console.error('Upload failed for', files[i].name, err);
+        newErrors.push({
+          filename: files[i].name,
+          message: extractUploadErrorMessage(err),
+        });
       }
     }
+
+    setUploadErrors(newErrors);
     setUploading(false);
     fetchDocs();
     if (fileInputRef.current) fileInputRef.current.value = '';
@@ -94,17 +125,17 @@ export default function DocumentsTab({ projectId }: { projectId: string }) {
   };
 
   return (
-    <div 
-      className="anim-fade-in relative min-h-[300px] transition-all"
+    <div
+      className="anim-fade-in relative min-h-75 transition-all"
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
       {/* Drag & Drop Visual Overlay */}
       {isDragging && (
-        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-indigo-500 bg-[var(--bg-elevated)]/90 backdrop-blur-sm transition-all">
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center rounded-xl border-2 border-dashed border-indigo-500 bg-(--bg-elevated)/90 backdrop-blur-sm transition-all">
           <UploadCloud size={48} className="mb-3 animate-bounce text-indigo-500" />
-          <p className="text-base font-semibold text-[var(--text-primary)]">
+          <p className="text-base font-semibold text-(--text-primary)">
             Drop your files here to upload
           </p>
         </div>
@@ -130,17 +161,42 @@ export default function DocumentsTab({ projectId }: { projectId: string }) {
         />
       </div>
 
+      {/* Per-file validation error banners */}
+      {uploadErrors.length > 0 && (
+        <div className="mb-4 flex flex-col gap-2">
+          {uploadErrors.map((e, idx) => (
+            <div
+              key={idx}
+              className="flex items-start gap-3 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm"
+            >
+              <AlertTriangle size={16} className="mt-0.5 shrink-0 text-red-400" />
+              <div className="min-w-0">
+                <span className="font-semibold text-red-400">{e.filename}: </span>
+                <span className="text-(--text-secondary)">{e.message}</span>
+              </div>
+              <button
+                className="ml-auto shrink-0 text-(--text-muted) hover:text-(--text-primary)"
+                onClick={() => setUploadErrors(prev => prev.filter((_, i) => i !== idx))}
+                aria-label="Dismiss error"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+
       {loading ? (
-        <div className="skeleton h-[100px]" />
+        <div className="skeleton h-25" />
       ) : docs.length === 0 ? (
-        <div 
-          className={`card border-dashed px-5 py-[60px] text-center transition-colors ${
+        <div
+          className={`card border-dashed px-5 py-15 text-center transition-colors ${
             isDragging ? 'border-indigo-500 bg-indigo-500/5' : ''
           }`}
         >
           <UploadCloud size={32} color="var(--text-muted)" className="mx-auto mb-4" />
-          <p className="text-[var(--text-secondary)]">No documents uploaded yet.</p>
-          <p className="mt-1 text-xs text-[var(--text-muted)]">
+          <p className="text-(--text-secondary)">No documents uploaded yet.</p>
+          <p className="mt-1 text-xs text-(--text-muted)">
             Drag & drop files here, or click Upload File above
           </p>
         </div>
@@ -153,7 +209,7 @@ export default function DocumentsTab({ projectId }: { projectId: string }) {
                 <File size={20} color="var(--accent)" className="mr-4" />
                 <div className="flex-1">
                   <div className="text-[15px] font-semibold">{doc.filename}</div>
-                  <div className="mt-1 flex gap-3 text-xs text-[var(--text-muted)]">
+                  <div className="mt-1 flex gap-3 text-xs text-(--text-muted)">
                     <span>{formatBytes(doc.file_size)}</span>
                     <span>·</span>
                     <DocStatusBadge status={doc.processing_status} />
@@ -199,7 +255,7 @@ export default function DocumentsTab({ projectId }: { projectId: string }) {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            margin: '0 auto',
+            margin: '25% auto',
           }}
           onClick={() => setSelectedDoc(null)}
         >
