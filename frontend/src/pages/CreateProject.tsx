@@ -2,7 +2,14 @@ import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import { Plus, ChevronLeft, UploadCloud, FileText, X, Loader2 } from 'lucide-react';
 import { projectsApi, documentsApi } from '@/api';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
@@ -89,7 +96,7 @@ export default function CreateProject() {
       <Button
         variant="ghost"
         size="sm"
-        className="gap-1 text-xs text-muted-foreground hover:text-foreground"
+        className="text-muted-foreground hover:text-foreground gap-1 text-xs"
         onClick={() => navigate('/projects')}
       >
         <ChevronLeft size={16} />
@@ -99,8 +106,8 @@ export default function CreateProject() {
       {/* Main Card Form */}
       <Card className="border-border shadow-sm">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-xl font-bold text-foreground">Create New Project</CardTitle>
-          <CardDescription className="text-xs text-muted-foreground">
+          <CardTitle className="text-foreground text-xl font-bold">Create New Project</CardTitle>
+          <CardDescription className="text-muted-foreground text-xs">
             Start a new AI-powered risk analysis workspace and attach project documents.
           </CardDescription>
         </CardHeader>
@@ -109,7 +116,7 @@ export default function CreateProject() {
           <CardContent className="space-y-5">
             {/* Project Name Field */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">
+              <label className="text-foreground text-xs font-semibold">
                 Project Name <span className="text-destructive">*</span>
               </label>
               <Input
@@ -125,19 +132,19 @@ export default function CreateProject() {
 
             {/* Description Field */}
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">Description</label>
+              <label className="text-foreground text-xs font-semibold">Description</label>
               <textarea
                 placeholder="Briefly describe the project goals and scope..."
                 value={description}
                 onChange={e => setDescription(e.target.value)}
                 rows={3}
-                className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-xs shadow-xs transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                className="border-input placeholder:text-muted-foreground focus-visible:ring-ring w-full rounded-md border bg-transparent px-3 py-2 text-xs shadow-xs transition-colors focus-visible:ring-1 focus-visible:outline-none"
               />
             </div>
 
             {/* Drag and Drop Upload Zone */}
             <div className="space-y-2">
-              <label className="text-xs font-semibold text-foreground">Project Documents</label>
+              <label className="text-foreground text-xs font-semibold">Project Documents</label>
 
               <input
                 type="file"
@@ -159,13 +166,14 @@ export default function CreateProject() {
                     : 'border-border bg-muted/30 hover:border-foreground/40 hover:bg-muted/60'
                 }`}
               >
-                <div className="mb-2 rounded-full border border-border bg-background p-2.5 text-foreground shadow-xs">
+                <div className="border-border bg-background text-foreground mb-2 rounded-full border p-2.5 shadow-xs">
                   <UploadCloud size={20} />
                 </div>
-                <p className="text-xs font-semibold text-foreground">
-                  Click to upload <span className="font-normal text-muted-foreground">or drag & drop</span>
+                <p className="text-foreground text-xs font-semibold">
+                  Click to upload{' '}
+                  <span className="text-muted-foreground font-normal">or drag & drop</span>
                 </p>
-                <p className="mt-1 text-[11px] text-muted-foreground">
+                <p className="text-muted-foreground mt-1 text-[11px]">
                   PDF, DOCX, TXT, CSV (Max 10MB per file)
                 </p>
               </div>
@@ -176,12 +184,12 @@ export default function CreateProject() {
                   {files.map((file, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center justify-between rounded-md border border-border bg-muted/40 px-3 py-2 text-xs"
+                      className="border-border bg-muted/40 flex items-center justify-between rounded-md border px-3 py-2 text-xs"
                     >
-                      <div className="flex items-center gap-2 truncate min-w-0">
+                      <div className="flex min-w-0 items-center gap-2 truncate">
                         <FileText size={14} className="text-muted-foreground shrink-0" />
-                        <span className="truncate font-medium text-foreground">{file.name}</span>
-                        <span className="text-[10px] text-muted-foreground shrink-0">
+                        <span className="text-foreground truncate font-medium">{file.name}</span>
+                        <span className="text-muted-foreground shrink-0 text-[10px]">
                           ({(file.size / (1024 * 1024)).toFixed(2)} MB)
                         </span>
                       </div>
@@ -193,7 +201,7 @@ export default function CreateProject() {
                           e.stopPropagation();
                           removeFile(idx);
                         }}
-                        className="h-6 w-6 text-muted-foreground hover:text-destructive shrink-0"
+                        className="text-muted-foreground hover:text-destructive h-6 w-6 shrink-0"
                       >
                         <X size={13} />
                       </Button>
@@ -204,7 +212,7 @@ export default function CreateProject() {
             </div>
           </CardContent>
 
-          <CardFooter className="flex justify-end gap-2 border-t border-border pt-4">
+          <CardFooter className="border-border flex justify-end gap-2 border-t pt-4">
             <Button
               type="button"
               variant="outline"
@@ -215,7 +223,12 @@ export default function CreateProject() {
             >
               Cancel
             </Button>
-            <Button type="submit" size="sm" disabled={loading || !name.trim()} className="text-xs gap-1.5">
+            <Button
+              type="submit"
+              size="sm"
+              disabled={loading || !name.trim()}
+              className="gap-1.5 text-xs"
+            >
               {loading ? (
                 <>
                   <Loader2 size={14} className="animate-spin" />
