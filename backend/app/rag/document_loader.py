@@ -29,7 +29,8 @@ class DocumentLoader:
         Returns:
             A list of LangChain Document objects if successful, otherwise None.
         """
-        path = Path(file_path)
+        path = Path(__file__).parent.parent.parent.parent/file_path
+
         if not path.exists():
             print(f"Error: File not found at path: {file_path}")
             return None
