@@ -31,7 +31,7 @@ It moves beyond simple data aggregation by performing deep document understandin
 
 ##  Architecture
 
-The system follows a modern microservice-like architecture, decoupled into a robust backend API and a responsive frontend user interface.
+The system follows a modern distributed architecture, decoupled into a robust backend API and a responsive frontend user interface.
 
 ###  Frontend (`frontend`)
 Built with **React** and **Vite**, the UI layer provides a rich, intuitive user experience. It handles user interactions, file uploads, and visualization of complex analytical outputs.
@@ -84,6 +84,9 @@ The backend handles data ingestion, AI processing, and data persistence.
     BACKEND_HOST=127.0.0.1
     BACKEND_PORT=3000
     BACKEND_RELOAD=True
+    EMBED_MODEL=gemini-embedding-001
+    MAX_UPLOAD_SIZE_MB=50
+    API_ORIGIN=http://localhost:5173
     ```
 
 4.  **Run the Server:**
