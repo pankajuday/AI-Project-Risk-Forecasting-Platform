@@ -15,27 +15,28 @@ from fastapi.responses import FileResponse
 from models.document_model import DocumentRecord, DocumentStatus, FileType
 from models.project_model import Project
 from rag.pipeline import run_ingestion_pipeline
+from utils.file_validator import FileValidationError, FileValidator
 
 
-#  Constants 
+# 
+# Constants
+# 
 
-ALLOWED_MIME_TYPES: dict[str, FileType] = {
-    "application/pdf": FileType.PDF,
-    "application/msword": FileType.DOCX,
-    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": FileType.DOCX,
-    "application/vnd.ms-excel": FileType.XLSX,
-    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": FileType.XLSX,
-    "text/plain": FileType.TXT,
-    "text/markdown": FileType.MD,
-    "text/csv": FileType.CSV,
-    "image/png": FileType.IMAGE,
-    "image/jpeg": FileType.IMAGE,
-    "image/jpg": FileType.IMAGE,
-    "application/vnd.ms-powerpoint": FileType.PPTX,
-    "application/vnd.openxmlformats-officedocument.presentationml.presentation": FileType.PPTX,
+BASE_UPLOAD_DIR = Path(__file__).parent.parent.parent.parent/"uploads"
+print(BASE_UPLOAD_DIR)
+
+# Map the string file_type values returned by FileValidator back to the
+# FileType enum used by DocumentRecord.
+_FILE_TYPE_MAP: dict[str, FileType] = {
+    "pdf":   FileType.PDF,
+    "docx":  FileType.DOCX,
+    "xlsx":  FileType.XLSX,
+    "pptx":  FileType.PPTX,
+    "txt":   FileType.TXT,
+    "md":    FileType.MD,
+    "csv":   FileType.CSV,
+    "image": FileType.IMAGE,
 }
-
-BASE_UPLOAD_DIR = "uploads"
 
 
 def _project_upload_dir(project_id: str) -> str:
@@ -44,7 +45,9 @@ def _project_upload_dir(project_id: str) -> str:
     return path
 
 
-#  Upload 
+# 
+# Upload
+# 
 
 async def upload_docs(
     project_id: str,
@@ -56,19 +59,31 @@ async def upload_docs(
     if not project:
         raise HTTPException(status_code=404, detail="Project not found.")
 
-    # Validate MIME type
-    if file.content_type not in ALLOWED_MIME_TYPES:
+    # Read content into memory first so we can validate before touching disk.
+    content = await file.read()
+
+    # Run all validation checks. Raises FileValidationError on any failure.
+    try:
+        result = FileValidator.validate(
+            content=content,
+            filename=file.filename or "",
+            claimed_content_type=file.content_type,
+        )
+    except FileValidationError as exc:
         raise HTTPException(
-            status_code=400,
-            detail=f"File type '{file.content_type}' is not supported.",
+            status_code=422,
+            detail={
+                "error": "FILE_VALIDATION_FAILED",
+                "code": exc.code,
+                "message": exc.message,
+            },
         )
 
-    file_type = ALLOWED_MIME_TYPES[file.content_type]
+    file_type = _FILE_TYPE_MAP.get(result.file_type, FileType.OTHER)
     upload_dir = _project_upload_dir(project_id)
     file_path = os.path.join(upload_dir, file.filename)
 
-    # Save file to disk
-    content = await file.read()
+    # Write validated content to disk
     with open(file_path, "wb") as f:
         f.write(content)
 
@@ -78,9 +93,9 @@ async def upload_docs(
         filename=file.filename,
         original_name=file.filename,
         file_type=file_type,
-        file_size=len(content),
+        file_size=result.file_size,
         storage_path=file_path,
-        mime_type=file.content_type,
+        mime_type=result.mime_type,
         processing_status=DocumentStatus.PENDING,
     )
     await doc_record.insert()
@@ -102,14 +117,18 @@ async def upload_docs(
     }
 
 
-#  List 
+# 
+# List
+# 
 
 async def list_documents(project_id: str):
     docs = await DocumentRecord.find(DocumentRecord.project_id == project_id).to_list()
     return docs
 
 
-#  Status 
+# 
+# Status
+# 
 
 async def get_document_status(document_id: str):
     doc = await DocumentRecord.get(document_id)
@@ -124,7 +143,9 @@ async def get_document_status(document_id: str):
     }
 
 
-#  Serve 
+# 
+# Serve
+# 
 
 async def serve_document(project_id: str, filename: str, download: bool = False):
     file_path = os.path.join(BASE_UPLOAD_DIR, project_id, filename)
@@ -138,7 +159,9 @@ async def serve_document(project_id: str, filename: str, download: bool = False)
     )
 
 
-#  Delete 
+# 
+# Delete
+# 
 
 async def delete_document(document_id: str):
     doc = await DocumentRecord.get(document_id)

@@ -3,11 +3,11 @@ RAG Ingestion Pipeline
 ======================
 Orchestrates the full document ingestion flow:
   Upload (file on disk)
-    → DocumentLoader (Docling → Markdown chunks)
-    → TextProcessor  (RecursiveCharacterTextSplitter)
-    → NVIDIAEmbeddings
-    → QdrantVectorStore (per-project collection)
-    → DocumentRecord status update (MongoDB)
+    > DocumentLoader (Docling > Markdown chunks)
+    > TextProcessor  (RecursiveCharacterTextSplitter)
+    > NVIDIAEmbeddings
+    > QdrantVectorStore (per-project collection)
+    > DocumentRecord status update (MongoDB)
 """
 
 from __future__ import annotations
