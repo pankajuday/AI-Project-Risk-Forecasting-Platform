@@ -67,8 +67,8 @@ def conditional_doc_router(
     """
     Routes the graph after `doc_audit_node`.
 
-    - "generate_docs"  → if there are any missing document types
-    - "skip_gen"       → if all documents are already present
+    - "generate_docs"  -> if there are any missing document types
+    - "skip_gen"       -> if all documents are already present
     """
     missing = state.get("missing_doc_types") or []
     route = "generate_docs" if missing else "skip_gen"
@@ -93,7 +93,7 @@ async def save_node(state: dict) -> dict:
     if not report:
         report = AnalysisReport(project_id=project_id)
 
-    # Map state → report fields
+    # Map state -> report fields
     report.scope = state.get("scope")
     report.risks = state.get("risks") or []
     report.health_score = state.get("health_score")
@@ -151,7 +151,7 @@ async def save_node(state: dict) -> dict:
 def _build_full_graph() -> StateGraph:
     """
     Builds the complete analysis pipeline graph.
-    Runs: scope → risk → health → doc_audit → [router] → gen/skip → save
+    Runs: scope -> risk -> health -> doc_audit -> [router] -> gen/skip -> save
     """
     graph = StateGraph(PipelineState)
 
@@ -191,7 +191,7 @@ def _build_full_graph() -> StateGraph:
 def _build_docs_only_graph() -> StateGraph:
     """
     Builds a lightweight graph that only runs the document sub-pipeline.
-    Runs: doc_audit → [router] → gen/skip → save
+    Runs: doc_audit -> [router] -> gen/skip -> save
     Requires scope + risks to already be in the provided initial state.
     """
     graph = StateGraph(PipelineState)
@@ -228,7 +228,7 @@ _docs_pipeline = _build_docs_only_graph()
 
 async def run_analysis(project_id: str) -> None:
     """
-    Full pipeline: scope → risk → health → doc_audit → gen/skip → save.
+    Full pipeline: scope -> risk -> health -> doc_audit -> gen/skip -> save.
     Called as a FastAPI BackgroundTask from POST /analysis/{project_id}/run.
     """
     print(f"\n[ORCHESTRATOR] Starting full analysis for project: {project_id}")
@@ -329,7 +329,7 @@ async def run_analysis(project_id: str) -> None:
 
 async def run_missing_docs_only(project_id: str) -> dict:
     """
-    Documents-only pipeline: doc_audit → gen/skip → save.
+    Documents-only pipeline: doc_audit -> gen/skip -> save.
     Reuses the existing scope + risks from the DB report.
     Does NOT re-run scope / risk / health agents.
 

@@ -31,6 +31,7 @@ from models.report_model import (
 )
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+LLM_MODEL = os.getenv("LLM_MODEL")
 
 #    All four canonical document types the pipeline can produce                 
 ALL_DOC_TYPES: list[str] = [
@@ -41,13 +42,48 @@ ALL_DOC_TYPES: list[str] = [
 ]
 
 llm = ChatGoogleGenerativeAI(
-    model="gemini-2.5-flash",
+    model=LLM_MODEL,
     google_api_key=GOOGLE_API_KEY,
     temperature=0.3,
 )
 
 
 #    Shared RAG helper                                                          
+
+
+def _extract_text_content(response) -> str:
+    """Normalize Gemini/LangChain responses into plain text."""
+    content = getattr(response, "content", response)
+
+    if isinstance(content, list):
+        parts: list[str] = []
+        for item in content:
+            if isinstance(item, dict):
+                text = item.get("text") or item.get("content")
+                if text is not None:
+                    parts.append(str(text))
+                else:
+                    parts.append(str(item))
+            elif hasattr(item, "text"):
+                parts.append(str(item.text))
+            elif hasattr(item, "content"):
+                parts.append(str(item.content))
+            else:
+                parts.append(str(item))
+        return "\n".join(part for part in parts if part)
+
+    if isinstance(content, dict):
+        text = content.get("text") or content.get("content")
+        if text is not None:
+            return str(text)
+        return str(content)
+
+    if hasattr(content, "text"):
+        return str(content.text)
+    if hasattr(content, "content"):
+        return str(content.content)
+    return str(content)
+
 
 async def _retrieve_context(project_id: str, query: str, k: int = 8) -> str:
     vector_store = get_vector_store(project_id)
@@ -63,29 +99,24 @@ async def generate_executive_summary(
     context = await _retrieve_context(project_id, "project overview summary objectives", k=6)
     scope_json = scope.model_dump_json(indent=2)
 
-    prompt = f"""Based on the following project documents and extracted scope, 
-write a professional Executive Summary in Markdown format.
-
-EXTRACTED SCOPE:
-{scope_json}
-
-DOCUMENT EXCERPTS:
-{context}
-
-Write a 400-600 word Executive Summary with sections:
-## Executive Summary
-### Project Overview
-### Key Objectives
-### Deliverables
-### Timeline
-### Stakeholders
-### Conclusion
+    prompt = f"""Based on the following project documents and extracted scope, write a professional Executive Summary in Markdown format.
+    EXTRACTED SCOPE:{scope_json}
+    DOCUMENT EXCERPTS:{context}
+    Write a 400-600 word Executive Summary with sections:
+    ## Executive Summary
+    ### Project Overview
+    ### Key Objectives
+    ### Deliverables
+    ### Timeline
+    ### Stakeholders
+    ### Conclusion
 """
     response = await llm.ainvoke([HumanMessage(content=prompt)])
+    text = _extract_text_content(response)
     return GeneratedDocument(
         title="Executive Summary",
         doc_type="executive_summary",
-        content=response.content,
+        content=text,
     )
 
 
@@ -117,10 +148,11 @@ Format each user story as:
 Generate 8-15 user stories. Group them by feature area with ## headers.
 """
     response = await llm.ainvoke([HumanMessage(content=prompt)])
+    text = _extract_text_content(response)
     return GeneratedDocument(
         title="User Stories",
         doc_type="user_stories",
-        content=response.content,
+        content=text,
     )
 
 
@@ -195,10 +227,11 @@ Generate a realistic sprint plan with 3-5 sprints. Format:
 Repeat for each sprint. Add a ## Summary section at the end.
 """
     response = await llm.ainvoke([HumanMessage(content=prompt)])
+    text = _extract_text_content(response)
     return GeneratedDocument(
         title="Sprint Plan",
         doc_type="sprint_plan",
-        content=response.content,
+        content=text,
     )
 
 
@@ -213,16 +246,16 @@ async def run_document_generator(
     docs = []
 
     docs.append(await generate_executive_summary(project_id, scope))
-    print("[DOC_GEN] ✅ Executive Summary done.")
+    print("[DOC_GEN] Executive Summary done.")
 
     docs.append(await generate_user_stories(project_id, scope))
-    print("[DOC_GEN] ✅ User Stories done.")
+    print("[DOC_GEN] User Stories done.")
 
     docs.append(await generate_risk_register_doc(risks))
-    print("[DOC_GEN] ✅ Risk Register done.")
+    print("[DOC_GEN] Risk Register done.")
 
     docs.append(await generate_sprint_plan(project_id, scope))
-    print("[DOC_GEN] ✅ Sprint Plan done.")
+    print("[DOC_GEN] Sprint Plan done.")
 
     return docs
 
@@ -240,7 +273,7 @@ async def doc_audit_node(state: dict) -> dict:
         missing_doc_types   — types that still need to be generated
     """
     project_id = state["project_id"]
-    print(f"[GRAPH] ▶ doc_audit_node — project: {project_id}")
+    print(f"[GRAPH] > doc_audit_node — project: {project_id}")
 
     existing: list[str] = []
     try:
@@ -253,7 +286,7 @@ async def doc_audit_node(state: dict) -> dict:
     missing = [dt for dt in ALL_DOC_TYPES if dt not in existing]
 
     log_msg = (
-        f"✅ doc_audit_node: {len(existing)} existing doc(s) {existing}, "
+        f"doc_audit_node: {len(existing)} existing doc(s) {existing}, "
         f"{len(missing)} missing → {missing}"
     )
     print(f"[GRAPH] {log_msg}")
@@ -276,11 +309,14 @@ async def doc_gen_node(state: dict) -> dict:
     scope: ScopeOutput | None = state.get("scope")
     risks: list[RiskItem] = state.get("risks") or []
 
-    print(f"[GRAPH] ▶ doc_gen_node — generating {len(missing)} missing doc(s): {missing}")
+    print(f"[GRAPH] > doc_gen_node — generating {len(missing)} missing doc(s): {missing}")
 
     if not scope:
+        msg = "doc_gen_node: scope is None — cannot generate documents (did scope_node fail?)"
+        print(f"[GRAPH] ⚠ {msg}")
         return {
-            "step_log": ["⚠ doc_gen_node: scope is None — skipping generation"],
+            "error": msg,
+            "step_log": [f"⚠ {msg}"],
         }
 
     new_docs: list[GeneratedDocument] = []
@@ -289,27 +325,27 @@ async def doc_gen_node(state: dict) -> dict:
     if "executive_summary" in missing:
         doc = await generate_executive_summary(project_id, scope)
         new_docs.append(doc)
-        print("[GRAPH] ✅ executive_summary generated.")
+        print("[GRAPH] executive_summary generated.")
 
     if "user_stories" in missing:
         doc = await generate_user_stories(project_id, scope)
         new_docs.append(doc)
-        print("[GRAPH] ✅ user_stories generated.")
+        print("[GRAPH] user_stories generated.")
 
     if "risk_register" in missing:
         doc = await generate_risk_register_doc(risks)
         new_docs.append(doc)
-        print("[GRAPH] ✅ risk_register generated.")
+        print("[GRAPH] risk_register generated.")
 
     if "sprint_plan" in missing:
         doc = await generate_sprint_plan(project_id, scope)
         new_docs.append(doc)
-        print("[GRAPH] ✅ sprint_plan generated.")
+        print("[GRAPH] sprint_plan generated.")
 
     return {
         # Reducer: _merge_docs will upsert these into the accumulated list
         "generated_documents": new_docs,
-        "step_log": [f"✅ doc_gen_node: generated {len(new_docs)} new doc(s) → {[d.doc_type for d in new_docs]}"],
+        "step_log": [f"doc_gen_node: generated {len(new_docs)} new doc(s) → {[d.doc_type for d in new_docs]}"],
     }
 
 
