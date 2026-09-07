@@ -11,7 +11,7 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-from models.report_model import ScopeOutput, RiskItem, RiskSeverity, HealthBreakdown
+from models.report_model import ScopeOutput, RiskItem, RiskSeverity, RiskCategory, HealthBreakdown
 
 
 def compute_health_score(
@@ -60,7 +60,7 @@ def compute_health_score(
         risk_density = max(0.0, 100.0 - penalty)
 
     #  4. Schedule Risk 
-    schedule_risks = [r for r in risks if r.category == "schedule"]
+    schedule_risks = [r for r in risks if r.category == RiskCategory.SCHEDULE]
     if not risks:
         schedule_risk_score = 100.0
     else:

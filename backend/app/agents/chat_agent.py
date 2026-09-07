@@ -31,9 +31,10 @@ from models.chat_model import ChatMessage, MessageRole
 load_dotenv()
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+LLM_MODEL = os.getenv("LLM_MODEL")
 
 llm = ChatGoogleGenerativeAI(
-    model="gemini-3.5-flash-lite",
+    model=LLM_MODEL,
     google_api_key=GOOGLE_API_KEY,
     temperature=0.2,
 )
