@@ -12,15 +12,16 @@ Endpoints:
   GET  /{project_id}/doc-audit        — audit which docs exist vs. are missing
 """
 
-from fastapi import APIRouter, BackgroundTasks, HTTPException
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Depends
 
 from agents.orchestrator import run_analysis, run_missing_docs_only
 from agents.document_generator_agent import ALL_DOC_TYPES
 from models.report_model import AnalysisReport, AnalysisStatus
 from models.document_model import DocumentRecord
 from models.project_model import Project
+from dependencies.auth import get_current_user
 
-router = APIRouter()
+router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
 # 
