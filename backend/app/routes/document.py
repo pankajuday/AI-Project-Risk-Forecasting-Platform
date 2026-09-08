@@ -1,7 +1,8 @@
 from typing import List
 
-from fastapi import APIRouter, BackgroundTasks, File, UploadFile
+from fastapi import APIRouter, BackgroundTasks, File, UploadFile, Depends
 from models.document_model import DocumentRecord
+from dependencies.auth import get_current_user
 
 from controllers.document_controller import (
     delete_document,
@@ -11,7 +12,8 @@ from controllers.document_controller import (
     upload_docs,
 )
 
-router = APIRouter()
+
+router = APIRouter(dependencies=[Depends(get_current_user)])
 
 
 @router.post("/{project_id}/upload")
