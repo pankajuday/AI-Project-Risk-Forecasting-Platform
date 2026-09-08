@@ -48,14 +48,15 @@ export default function ProjectList() {
   return (
     <div className="anim-fade-up mx-auto max-w-6xl space-y-6">
       {/* Header Section */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-6">
+      <div className="border-border flex flex-col gap-4 border-b pb-6 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Projects</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            {projects.length} project{projects.length !== 1 ? 's' : ''} — manage, upload, and analyze your project intelligence.
+          <h1 className="text-foreground text-2xl font-bold tracking-tight">Projects</h1>
+          <p className="text-muted-foreground mt-1 text-sm">
+            {projects.length} project{projects.length !== 1 ? 's' : ''} — manage, upload, and
+            analyze your project intelligence.
           </p>
         </div>
-        <Button onClick={() => navigate('/projects/new')} className="gap-2 shrink-0">
+        <Button onClick={() => navigate('/projects/new')} className="shrink-0 gap-2">
           <Plus size={16} />
           <span>New Project</span>
         </Button>
@@ -64,7 +65,10 @@ export default function ProjectList() {
       {/* Search Input Bar */}
       {!loading && projects.length > 0 && (
         <div className="relative max-w-md">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+          <Search
+            size={15}
+            className="text-muted-foreground absolute top-1/2 left-3 -translate-y-1/2"
+          />
           <Input
             placeholder="Search projects by title or description..."
             value={search}
@@ -78,7 +82,7 @@ export default function ProjectList() {
       {loading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {[1, 2, 3, 4, 5, 6].map(i => (
-            <Card key={i} className="p-4 space-y-3">
+            <Card key={i} className="space-y-3 p-4">
               <Skeleton className="h-10 w-10 rounded-lg" />
               <Skeleton className="h-5 w-3/4" />
               <Skeleton className="h-4 w-full" />
@@ -90,7 +94,7 @@ export default function ProjectList() {
         <EmptyState onNew={() => navigate('/projects/new')} />
       ) : filtered.length === 0 ? (
         <Card className="border-dashed p-12 text-center">
-          <p className="text-sm text-muted-foreground">No projects match "{search}"</p>
+          <p className="text-muted-foreground text-sm">No projects match "{search}"</p>
         </Card>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -135,11 +139,11 @@ function ProjectCard({
   return (
     <Card
       onClick={onClick}
-      className="group relative flex flex-col justify-between cursor-pointer transition-all hover:border-foreground/40 hover:shadow-md"
+      className="group hover:border-foreground/40 relative flex cursor-pointer flex-col justify-between transition-all hover:shadow-md"
     >
       <CardHeader className="space-y-3 pb-3">
         <div className="flex items-start justify-between">
-          <div className="flex size-9 items-center justify-center rounded-lg border border-border bg-muted text-foreground">
+          <div className="border-border bg-muted text-foreground flex size-9 items-center justify-center rounded-lg border">
             <FolderOpen size={18} />
           </div>
           <div className="flex items-center gap-1.5">
@@ -147,7 +151,7 @@ function ProjectCard({
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 hover:text-destructive"
+              className="text-muted-foreground hover:text-destructive h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100"
               onClick={onDelete}
               title="Delete project"
             >
@@ -157,18 +161,16 @@ function ProjectCard({
         </div>
 
         <div>
-          <CardTitle className="text-base font-bold truncate text-foreground group-hover:text-primary">
+          <CardTitle className="text-foreground group-hover:text-primary truncate text-base font-bold">
             {p.name}
           </CardTitle>
           {p.description && (
-            <CardDescription className="text-xs line-clamp-2 mt-1">
-              {p.description}
-            </CardDescription>
+            <CardDescription className="mt-1 line-clamp-2 text-xs">{p.description}</CardDescription>
           )}
         </div>
       </CardHeader>
 
-      <CardFooter className="pt-3 border-t border-border text-xs text-muted-foreground flex items-center justify-between">
+      <CardFooter className="border-border text-muted-foreground flex items-center justify-between border-t pt-3 text-xs">
         <div className="flex items-center gap-3">
           <span className="flex items-center gap-1">
             <FileText size={13} />
@@ -183,7 +185,7 @@ function ProjectCard({
           )}
         </div>
 
-        <span className="flex items-center gap-0.5 font-medium text-foreground opacity-0 transition-opacity group-hover:opacity-100">
+        <span className="text-foreground flex items-center gap-0.5 font-medium opacity-0 transition-opacity group-hover:opacity-100">
           <span>Open</span>
           <ChevronRight size={13} />
         </span>
@@ -194,13 +196,14 @@ function ProjectCard({
 
 function EmptyState({ onNew }: { onNew: () => void }) {
   return (
-    <Card className="border-dashed p-12 text-center flex flex-col items-center justify-center">
-      <div className="mb-4 flex size-14 items-center justify-center rounded-full border border-border bg-muted text-foreground">
+    <Card className="flex flex-col items-center justify-center border-dashed p-12 text-center">
+      <div className="border-border bg-muted text-foreground mb-4 flex size-14 items-center justify-center rounded-full border">
         <Zap size={24} />
       </div>
-      <h2 className="text-lg font-bold text-foreground mb-1">No projects found</h2>
-      <p className="text-xs text-muted-foreground max-w-sm mb-6">
-        Create your first project to start uploading documents, running AI analysis, and forecasting risks.
+      <h2 className="text-foreground mb-1 text-lg font-bold">No projects found</h2>
+      <p className="text-muted-foreground mb-6 max-w-sm text-xs">
+        Create your first project to start uploading documents, running AI analysis, and forecasting
+        risks.
       </p>
       <Button onClick={onNew} className="gap-2">
         <Plus size={15} />
@@ -210,8 +213,14 @@ function EmptyState({ onNew }: { onNew: () => void }) {
   );
 }
 
-function statusMeta(status: string): { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' } {
-  const map: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }> = {
+function statusMeta(status: string): {
+  label: string;
+  variant: 'default' | 'secondary' | 'outline' | 'destructive';
+} {
+  const map: Record<
+    string,
+    { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive' }
+  > = {
     created: { label: 'New', variant: 'outline' },
     uploading: { label: 'Uploading', variant: 'secondary' },
     indexing: { label: 'Indexing', variant: 'secondary' },

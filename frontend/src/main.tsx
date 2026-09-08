@@ -7,7 +7,13 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={true}>
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="dark"
+      enableSystem={true}
+      themes={['light', 'dark', 'dim']}
+      value={{ light: 'light', dark: 'dark', dim: 'dim' }}
+    >
       <TooltipProvider>
         <App />
       </TooltipProvider>

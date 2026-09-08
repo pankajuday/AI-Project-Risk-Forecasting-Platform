@@ -14,7 +14,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 
+import { useAuth } from '@/context/AuthContext';
+
 export default function CreateProject() {
+  const { isAuthenticated, openAuthModal } = useAuth();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [files, setFiles] = useState<File[]>([]);
@@ -68,23 +71,37 @@ export default function CreateProject() {
     e.preventDefault();
     if (!name.trim()) return;
 
+    if (!isAuthenticated) {
+      toast.error('Please sign in to create a project');
+      openAuthModal('login');
+      return;
+    }
+
     try {
       setLoading(true);
 
       // 1. Create the project standard payload
       const res = await projectsApi.create({ name, description });
-      const newProjectId = res.data.id;
+      const newProjectId = res.data.id || (res.data as any)._id;
 
       // 2. Upload attached documents if any were dropped/selected
       if (files.length > 0) {
         await Promise.all(files.map(file => documentsApi.upload(newProjectId, file)));
       }
 
+      toast.success('Project created successfully!');
       // 3. Navigate to the project detail view
       navigate(`/projects/${newProjectId}`);
-    } catch (error) {
+    } catch (error: any) {
       console.error(error);
-      toast('Failed to create project or upload documents');
+      if (error.response?.status === 401) {
+        toast.error('Session expired. Please sign in again.');
+        openAuthModal('login');
+      } else {
+        const errorMsg =
+          error.response?.data?.detail || 'Failed to create project or upload documents';
+        toast.error(errorMsg);
+      }
     } finally {
       setLoading(false);
     }

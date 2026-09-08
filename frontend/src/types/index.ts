@@ -1,5 +1,12 @@
 //  API Types (matching backend models)
 
+export interface User {
+  id: string;
+  email: string;
+  name?: string;
+  project_list?: string[];
+}
+
 export type ProjectStatus =
   | 'created'
   | 'uploading'
