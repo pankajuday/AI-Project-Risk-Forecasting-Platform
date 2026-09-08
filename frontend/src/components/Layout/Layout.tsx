@@ -6,17 +6,17 @@ import Top from './Top';
 export default function Layout() {
   return (
     <SidebarProvider defaultOpen={true}>
-      <div className="flex h-screen w-full bg-background text-foreground overflow-hidden">
+      <div className="bg-background text-foreground flex h-screen w-full overflow-hidden">
         {/* Side Component */}
         <Sidebar />
 
         {/* Top & Main Component Container */}
-        <SidebarInset className="flex flex-col flex-1 min-w-0 h-full bg-background overflow-hidden">
+        <SidebarInset className="bg-background flex h-full min-w-0 flex-1 flex-col overflow-hidden">
           {/* Top Component */}
           <Top />
 
           {/* Main Component Render Area */}
-          <main className="flex-1 overflow-y-auto overflow-x-hidden p-6">
+          <main className="flex-1 overflow-x-hidden overflow-y-auto p-6">
             <Outlet />
           </main>
         </SidebarInset>

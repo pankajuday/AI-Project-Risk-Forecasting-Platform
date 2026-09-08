@@ -12,66 +12,70 @@ const REMARK_PLUGINS = [remarkGfm];
 
 export const MdFormatter = memo(function MdFormatter({ content }: MdFormatterProps) {
   return (
-    <div className="w-full overflow-x-auto text-foreground">
+    <div className="text-foreground w-full overflow-x-auto">
       <ReactMarkdown
         remarkPlugins={REMARK_PLUGINS}
         components={{
           // Headings
           h1({ children }) {
             return (
-              <h1 className="text-2xl font-bold tracking-tight text-foreground mt-6 mb-3 pb-2 border-b border-border">
+              <h1 className="text-foreground border-border mt-6 mb-3 border-b pb-2 text-2xl font-bold tracking-tight">
                 {children}
               </h1>
             );
           },
           h2({ children }) {
             return (
-              <h2 className="text-xl font-semibold tracking-tight text-foreground mt-5 mb-2.5 pb-1 border-b border-border/40">
+              <h2 className="text-foreground border-border/40 mt-5 mb-2.5 border-b pb-1 text-xl font-semibold tracking-tight">
                 {children}
               </h2>
             );
           },
           h3({ children }) {
             return (
-              <h3 className="text-base font-semibold text-foreground mt-4 mb-2">
-                {children}
-              </h3>
+              <h3 className="text-foreground mt-4 mb-2 text-base font-semibold">{children}</h3>
             );
           },
           h4({ children }) {
             return (
-              <h4 className="text-sm font-semibold text-foreground mt-3 mb-1.5">
-                {children}
-              </h4>
+              <h4 className="text-foreground mt-3 mb-1.5 text-sm font-semibold">{children}</h4>
             );
           },
 
           // Paragraphs & Text
           p({ children }) {
-            return <p className="text-sm leading-relaxed text-foreground/90 my-2.5">{children}</p>;
+            return <p className="text-foreground/90 my-2.5 text-sm leading-relaxed">{children}</p>;
           },
           strong({ children }) {
-            return <strong className="font-semibold text-foreground">{children}</strong>;
+            return <strong className="text-foreground font-semibold">{children}</strong>;
           },
           em({ children }) {
-            return <em className="italic text-foreground/90">{children}</em>;
+            return <em className="text-foreground/90 italic">{children}</em>;
           },
 
           // Lists
           ul({ children }) {
-            return <ul className="my-3 space-y-1.5 list-disc list-outside pl-5 text-sm text-foreground/90">{children}</ul>;
+            return (
+              <ul className="text-foreground/90 my-3 list-outside list-disc space-y-1.5 pl-5 text-sm">
+                {children}
+              </ul>
+            );
           },
           ol({ children }) {
-            return <ol className="my-3 space-y-1.5 list-decimal list-outside pl-5 text-sm text-foreground/90">{children}</ol>;
+            return (
+              <ol className="text-foreground/90 my-3 list-outside list-decimal space-y-1.5 pl-5 text-sm">
+                {children}
+              </ol>
+            );
           },
           li({ children }) {
-            return <li className="text-sm leading-relaxed text-foreground/90">{children}</li>;
+            return <li className="text-foreground/90 text-sm leading-relaxed">{children}</li>;
           },
 
           // Blockquote
           blockquote({ children }) {
             return (
-              <blockquote className="my-4 border-l-4 border-primary/50 bg-muted/30 px-4 py-2 italic text-muted-foreground rounded-r-md text-sm">
+              <blockquote className="border-primary/50 bg-muted/30 text-muted-foreground my-4 rounded-r-md border-l-4 px-4 py-2 text-sm italic">
                 {children}
               </blockquote>
             );
@@ -79,7 +83,7 @@ export const MdFormatter = memo(function MdFormatter({ content }: MdFormatterPro
 
           // Horizontal Rule
           hr() {
-            return <hr className="my-6 border-border" />;
+            return <hr className="border-border my-6" />;
           },
 
           // Code
@@ -109,7 +113,7 @@ export const MdFormatter = memo(function MdFormatter({ content }: MdFormatterPro
             return (
               <code
                 {...props}
-                className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs font-medium text-foreground/90 border border-border/50"
+                className="bg-muted text-foreground/90 border-border/50 rounded border px-1.5 py-0.5 font-mono text-xs font-medium"
               >
                 {children}
               </code>
@@ -124,7 +128,7 @@ export const MdFormatter = memo(function MdFormatter({ content }: MdFormatterPro
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="font-medium text-primary underline underline-offset-4 hover:opacity-80 transition-opacity"
+                className="text-primary font-medium underline underline-offset-4 transition-opacity hover:opacity-80"
               >
                 {children}
               </a>
@@ -134,18 +138,18 @@ export const MdFormatter = memo(function MdFormatter({ content }: MdFormatterPro
           // Table
           table({ children }) {
             return (
-              <div className="my-4 w-full overflow-x-auto rounded-lg border border-border bg-card">
+              <div className="border-border bg-card my-4 w-full overflow-x-auto rounded-lg border">
                 <table className="w-full min-w-125 border-collapse text-xs">{children}</table>
               </div>
             );
           },
 
           thead({ children }) {
-            return <thead className="bg-muted/60 border-b border-border">{children}</thead>;
+            return <thead className="bg-muted/60 border-border border-b">{children}</thead>;
           },
 
           tbody({ children }) {
-            return <tbody className="divide-y divide-border/50">{children}</tbody>;
+            return <tbody className="divide-border/50 divide-y">{children}</tbody>;
           },
 
           tr({ children }) {
@@ -154,18 +158,12 @@ export const MdFormatter = memo(function MdFormatter({ content }: MdFormatterPro
 
           th({ children }) {
             return (
-              <th className="px-3.5 py-2.5 text-left font-semibold text-foreground">
-                {children}
-              </th>
+              <th className="text-foreground px-3.5 py-2.5 text-left font-semibold">{children}</th>
             );
           },
 
           td({ children }) {
-            return (
-              <td className="px-3.5 py-2.5 align-top text-muted-foreground">
-                {children}
-              </td>
-            );
+            return <td className="text-muted-foreground px-3.5 py-2.5 align-top">{children}</td>;
           },
         }}
       >
@@ -176,4 +174,3 @@ export const MdFormatter = memo(function MdFormatter({ content }: MdFormatterPro
 });
 
 export default MdFormatter;
-

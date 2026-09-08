@@ -164,7 +164,7 @@ export default function AnalysisTab({ projectId }: { projectId: string }) {
 
   if (loading && status === 'not_started') {
     return (
-      <div className="max-w-3xl mx-auto space-y-6">
+      <div className="mx-auto max-w-3xl space-y-6">
         <Skeleton className="h-64 w-full rounded-xl" />
         <Skeleton className="h-48 w-full rounded-xl" />
       </div>
@@ -187,29 +187,33 @@ export default function AnalysisTab({ projectId }: { projectId: string }) {
   };
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6 transition-all duration-300">
+    <div className="mx-auto max-w-3xl space-y-6 transition-all duration-300">
       {/* Main Status & Pipeline Card */}
-      <Card className="relative overflow-hidden border-border/80 bg-card">
-        <CardContent className="p-8 text-center flex flex-col items-center">
-          <div className="p-3.5 rounded-full bg-primary/10 text-primary mb-5 ring-1 ring-primary/20">
+      <Card className="border-border/80 bg-card relative overflow-hidden">
+        <CardContent className="flex flex-col items-center p-8 text-center">
+          <div className="bg-primary/10 text-primary ring-primary/20 mb-5 rounded-full p-3.5 ring-1">
             <Activity className="size-8" />
           </div>
 
-          <h2 className="text-2xl font-bold tracking-tight text-foreground">
+          <h2 className="text-foreground text-2xl font-bold tracking-tight">
             Multi-Agent Risk Analysis
           </h2>
-          <p className="text-sm text-muted-foreground mt-2 max-w-md">
-            Our autonomous multi-agent pipeline extracts deliverables, scans for project risks, and generates documentation.
+          <p className="text-muted-foreground mt-2 max-w-md text-sm">
+            Our autonomous multi-agent pipeline extracts deliverables, scans for project risks, and
+            generates documentation.
           </p>
 
           {/* Warning banner if no documents uploaded */}
           {uploadedDocCount === 0 && status !== 'running' && (
-            <div className="w-full max-w-lg mt-6 p-4 rounded-lg border border-amber-500/30 bg-amber-500/10 text-left flex items-start gap-3">
-              <UploadCloud className="size-5 text-amber-400 shrink-0 mt-0.5" />
+            <div className="mt-6 flex w-full max-w-lg items-start gap-3 rounded-lg border border-amber-500/30 bg-amber-500/10 p-4 text-left">
+              <UploadCloud className="mt-0.5 size-5 shrink-0 text-amber-400" />
               <div className="text-xs">
-                <span className="font-semibold text-amber-400 block mb-0.5">No Documents Uploaded</span>
+                <span className="mb-0.5 block font-semibold text-amber-400">
+                  No Documents Uploaded
+                </span>
                 <span className="text-muted-foreground">
-                  Upload project documents (BRD, SOW, SRS, etc.) in the <strong>Documents</strong> tab before running the AI risk analysis pipeline.
+                  Upload project documents (BRD, SOW, SRS, etc.) in the <strong>Documents</strong>{' '}
+                  tab before running the AI risk analysis pipeline.
                 </span>
               </div>
             </div>
@@ -217,39 +221,39 @@ export default function AnalysisTab({ projectId }: { projectId: string }) {
 
           {/* Running State */}
           {status === 'running' ? (
-            <div className="w-full max-w-md mt-6 space-y-4">
-              <div className="flex items-center justify-center gap-2.5 text-primary text-sm font-medium">
+            <div className="mt-6 w-full max-w-md space-y-4">
+              <div className="text-primary flex items-center justify-center gap-2.5 text-sm font-medium">
                 <RefreshCw className="size-4 animate-spin" />
                 <span>{STEP_NAME_MAP[pipelineStep] || 'Processing pipeline step...'}</span>
               </div>
 
               {/* Progress bar */}
-              <div className="w-full bg-muted h-2.5 rounded-full overflow-hidden p-0.5 ring-1 ring-foreground/5">
+              <div className="bg-muted ring-foreground/5 h-2.5 w-full overflow-hidden rounded-full p-0.5 ring-1">
                 <div
                   className="bg-primary h-full rounded-full transition-all duration-500 ease-out"
                   style={{ width: `${getStepProgress(pipelineStep)}%` }}
                 />
               </div>
 
-              <div className="text-xs text-muted-foreground flex justify-between items-center px-1 font-mono">
+              <div className="text-muted-foreground flex items-center justify-between px-1 font-mono text-xs">
                 <span>Current Step: {pipelineStep || 'initializing'}</span>
                 <span>{getStepProgress(pipelineStep)}%</span>
               </div>
             </div>
           ) : status === 'failed' ? (
             /* Failed State */
-            <div className="mt-6 space-y-4 flex flex-col items-center">
+            <div className="mt-6 flex flex-col items-center space-y-4">
               <Badge variant="destructive" className="gap-1.5 px-3 py-1 text-xs">
                 <AlertTriangle className="size-3.5" />
                 Analysis Pipeline Failed
               </Badge>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-muted-foreground text-xs">
                 An error occurred during the analysis run. You can retry below.
               </p>
               <Button
                 onClick={handleRunFullAnalysis}
                 disabled={actionLoading || uploadedDocCount === 0}
-                className="gap-2 cursor-pointer mt-2"
+                className="mt-2 cursor-pointer gap-2"
               >
                 <RefreshCw className="size-4" />
                 Re-Run Full Analysis
@@ -257,13 +261,17 @@ export default function AnalysisTab({ projectId }: { projectId: string }) {
             </div>
           ) : status === 'ready' ? (
             /* Ready State */
-            <div className="mt-6 space-y-4 flex flex-col items-center">
-              <Badge variant="outline" className="border-emerald-500/30 bg-emerald-500/10 text-emerald-400 gap-1.5 px-3 py-1 text-xs">
+            <div className="mt-6 flex flex-col items-center space-y-4">
+              <Badge
+                variant="outline"
+                className="gap-1.5 border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs text-emerald-400"
+              >
                 <CheckCircle2 className="size-3.5 text-emerald-400" />
                 Workspace Analysis Complete
               </Badge>
-              <p className="text-xs text-muted-foreground max-w-sm">
-                AI risk forecasts and documentation audit have been generated and are ready for review.
+              <p className="text-muted-foreground max-w-sm text-xs">
+                AI risk forecasts and documentation audit have been generated and are ready for
+                review.
               </p>
               <div className="flex items-center gap-3 pt-2">
                 <Button
@@ -271,7 +279,7 @@ export default function AnalysisTab({ projectId }: { projectId: string }) {
                   size="sm"
                   onClick={handleRunFullAnalysis}
                   disabled={actionLoading || uploadedDocCount === 0}
-                  className="gap-2 cursor-pointer"
+                  className="cursor-pointer gap-2"
                 >
                   <RefreshCw className="size-3.5" />
                   Full Re-run
@@ -285,7 +293,7 @@ export default function AnalysisTab({ projectId }: { projectId: string }) {
                 size="lg"
                 onClick={handleRunFullAnalysis}
                 disabled={actionLoading || uploadedDocCount === 0}
-                className="gap-2 cursor-pointer px-6"
+                className="cursor-pointer gap-2 px-6"
               >
                 <Play className="size-4 fill-current" />
                 Run Full Analysis
@@ -300,37 +308,39 @@ export default function AnalysisTab({ projectId }: { projectId: string }) {
         <Card className="border-border/80">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-4">
             <div>
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <FileText className="size-4 text-primary" />
+              <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                <FileText className="text-primary size-4" />
                 Document Deliverables Audit
               </CardTitle>
-              <CardDescription className="text-xs mt-1">
+              <CardDescription className="mt-1 text-xs">
                 LangGraph pipeline checks existing documentation against project requirements.
               </CardDescription>
             </div>
-            <Badge variant="secondary" className="font-mono text-xs px-2.5 py-0.5">
+            <Badge variant="secondary" className="px-2.5 py-0.5 font-mono text-xs">
               {docAudit.present_count} / {docAudit.total} Built
             </Badge>
           </CardHeader>
 
           <CardContent className="space-y-4">
             {/* Horizontal deliverables status pills */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {docAudit.all_doc_types.map(docType => {
                 const isPresent = docAudit.existing_doc_types.includes(docType);
                 return (
                   <div
                     key={docType}
-                    className={`flex items-center justify-between gap-2 p-3 rounded-lg border text-xs font-medium transition-all ${
+                    className={`flex items-center justify-between gap-2 rounded-lg border p-3 text-xs font-medium transition-all ${
                       isPresent
                         ? 'border-emerald-500/25 bg-emerald-500/10 text-emerald-400'
                         : 'border-amber-500/25 bg-amber-500/10 text-amber-400'
                     }`}
                   >
-                    <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex min-w-0 items-center gap-2">
                       <div
-                        className={`size-5 rounded-full flex items-center justify-center shrink-0 ${
-                          isPresent ? 'bg-emerald-500/20 text-emerald-400' : 'bg-amber-500/20 text-amber-400'
+                        className={`flex size-5 shrink-0 items-center justify-center rounded-full ${
+                          isPresent
+                            ? 'bg-emerald-500/20 text-emerald-400'
+                            : 'bg-amber-500/20 text-amber-400'
                         }`}
                       >
                         {isPresent ? (
@@ -339,14 +349,14 @@ export default function AnalysisTab({ projectId }: { projectId: string }) {
                           <Clock className="size-3" />
                         )}
                       </div>
-                      <span className="truncate text-xs font-medium text-foreground">
+                      <span className="text-foreground truncate text-xs font-medium">
                         {DOC_NAME_MAP[docType] || docType}
                       </span>
                     </div>
 
                     <Badge
                       variant="outline"
-                      className={`text-[10px] shrink-0 font-normal px-1.5 py-0 ${
+                      className={`shrink-0 px-1.5 py-0 text-[10px] font-normal ${
                         isPresent
                           ? 'border-emerald-500/30 bg-emerald-500/20 text-emerald-300'
                           : 'border-amber-500/30 bg-amber-500/20 text-amber-300'
@@ -361,12 +371,12 @@ export default function AnalysisTab({ projectId }: { projectId: string }) {
 
             {/* Action banner if missing documents detected */}
             {!docAudit.all_present && status !== 'running' && (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-lg border border-primary/20 bg-primary/5 mt-4">
+              <div className="border-primary/20 bg-primary/5 mt-4 flex flex-col justify-between gap-4 rounded-lg border p-4 sm:flex-row sm:items-center">
                 <div>
-                  <div className="text-sm font-semibold text-foreground">
+                  <div className="text-foreground text-sm font-semibold">
                     Missing documents detected ({docAudit.missing_count})
                   </div>
-                  <div className="text-xs text-muted-foreground mt-0.5">
+                  <div className="text-muted-foreground mt-0.5 text-xs">
                     Generate missing files only without re-running full risk analysis.
                   </div>
                 </div>
@@ -375,7 +385,7 @@ export default function AnalysisTab({ projectId }: { projectId: string }) {
                   size="sm"
                   onClick={handleGenerateMissing}
                   disabled={actionLoading}
-                  className="shrink-0 gap-2 cursor-pointer border-primary/30 hover:bg-primary/10"
+                  className="border-primary/30 hover:bg-primary/10 shrink-0 cursor-pointer gap-2"
                 >
                   <span>Generate Missing</span>
                   <ArrowRight className="size-3.5" />
@@ -388,4 +398,3 @@ export default function AnalysisTab({ projectId }: { projectId: string }) {
     </div>
   );
 }
-

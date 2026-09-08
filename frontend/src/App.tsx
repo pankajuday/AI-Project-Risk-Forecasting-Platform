@@ -4,6 +4,8 @@ import ProjectList from '@/pages/ProjectList';
 import CreateProject from '@/pages/CreateProject';
 import ProjectDetail from '@/pages/ProjectDetail';
 import { Toaster } from '@/components/ui/sonner';
+import { AuthProvider } from '@/context/AuthContext';
+import { AuthModal } from '@/components/Auth/AuthModal';
 
 const router = createBrowserRouter([
   {
@@ -27,10 +29,10 @@ const router = createBrowserRouter([
 
 export default function App() {
   return (
-    <>
+    <AuthProvider>
       <Toaster position="top-right" richColors />
+      <AuthModal />
       <RouterProvider router={router} />
-    </>
+    </AuthProvider>
   );
 }
-

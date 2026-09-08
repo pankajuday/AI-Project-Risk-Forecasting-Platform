@@ -1,11 +1,31 @@
 import axios from 'axios';
 
-export const BASE_URL = import.meta.env.VITE_API_URI || 'http://127.0.0.1:3000/v1/api';
+export const BASE_URL = import.meta.env.VITE_API_URI || 'http://127.0.0.1:3000';
+
+export const TOKEN_STORAGE_KEY = 'ai_risk_platform_token';
 
 const api = axios.create({
-  baseURL: BASE_URL,
+  baseURL: `${BASE_URL}/v1/api`,
   headers: { 'Content-Type': 'application/json' },
+  withCredentials: true,
 });
+
+api.interceptors.request.use(config => {
+  const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Auth / User
+export const authApi = {
+  login: (data: { email: string; password: string }) => api.post('/user/login', data),
+  register: (data: { email: string; password: string; name?: string }) =>
+    api.post('/user/register', data),
+  logout: () => api.post('/user/logout'),
+  getMe: () => api.get('/user/me'),
+};
 
 // Projects
 export const projectsApi = {
@@ -37,9 +57,6 @@ export const documentsApi = {
     api.get(`/document/${encodeURIComponent(projectId)}/view/${encodeURIComponent(filename)}`, {
       responseType: 'arraybuffer',
     }),
-
-  getViewUrlString: (projectId: string, filename: string, download: boolean = false) =>
-    `${BASE_URL}/document/${encodeURIComponent(projectId)}/view/${encodeURIComponent(filename)}?download=${download}`,
 
   delete: (projectId: string, documentId: string) =>
     api.delete(`/document/${projectId}/delete/${documentId}`),
