@@ -4,6 +4,7 @@
 @import "@fontsource-variable/geist";
 /*  ---break---  */
 @custom-variant dark (&:is(.dark *));
+@custom-variant dark (&:is(.dim *));
 
 @theme {
   --font-sans:
