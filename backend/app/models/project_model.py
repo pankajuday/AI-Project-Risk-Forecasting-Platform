@@ -20,33 +20,33 @@ class ProjectStatus(str, Enum):
 class Project(Document):
     """Core container: every artifact and analysis belongs to a Project."""
 
-    # --- Core Identification ---
+    #  Core Identification 
     name: str
     description: Optional[str] = None
 
-    # --- Workflow & Status ---
+    #  Workflow & Status 
     status: ProjectStatus = ProjectStatus.CREATED
 
-    # --- Tracking & Metrics ---
+    #  Tracking & Metrics 
     total_files: int = Field(default=0)
     total_chunks: int = Field(default=0)
     last_ingested_at: Optional[datetime] = None
 
-    # --- Health Metrics (AI outputs) ---
+    #  Health Metrics (AI outputs) 
     current_health_score: Optional[float] = Field(None, ge=0.0, le=100.0)
     health_score_history: List[Dict[str, Any]] = Field(default_factory=list)
 
-    # --- Reference Data ---
+    #  Reference Data 
     associated_document_ids: List[str] = Field(
         default_factory=list,
         description="IDs of DocumentRecord entries associated with this project.",
     )
 
-    # --- Configuration & Metadata ---
+    #  Configuration & Metadata 
     config: Dict[str, Any] = Field(default_factory=dict)
     metadata: Optional[Dict[str, str]] = Field(default_factory=dict)
 
-    # --- Timestamps ---
+    #  Timestamps 
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
 

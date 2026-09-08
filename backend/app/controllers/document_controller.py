@@ -23,7 +23,6 @@ from utils.file_validator import FileValidationError, FileValidator
 # 
 
 BASE_UPLOAD_DIR = Path(__file__).parent.parent.parent.parent/"uploads"
-print(BASE_UPLOAD_DIR)
 
 # Map the string file_type values returned by FileValidator back to the
 # FileType enum used by DocumentRecord.
@@ -151,9 +150,39 @@ async def serve_document(project_id: str, filename: str, download: bool = False)
     file_path = os.path.join(BASE_UPLOAD_DIR, project_id, filename)
     if not os.path.isfile(file_path):
         raise HTTPException(status_code=404, detail="Document not found.")
+
     disposition = "attachment" if download else "inline"
+
+    lower_name = filename.lower()
+    media_type = None
+
+    if lower_name.endswith(".pdf"):
+        media_type = "application/pdf"
+    elif lower_name.endswith(".docx"):
+        media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+    elif lower_name.endswith(".doc"):
+        media_type = "application/msword"
+    elif lower_name.endswith(".xlsx"):
+        media_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    elif lower_name.endswith(".xls"):
+        media_type = "application/vnd.ms-excel"
+    elif lower_name.endswith(".pptx"):
+        media_type = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
+    elif lower_name.endswith((".txt", ".log")):
+        media_type = "text/plain; charset=utf-8"
+    elif lower_name.endswith(".md"):
+        media_type = "text/markdown; charset=utf-8"
+    elif lower_name.endswith(".csv"):
+        media_type = "text/csv; charset=utf-8"
+    elif lower_name.endswith(".json"):
+        media_type = "application/json; charset=utf-8"
+    elif lower_name.endswith((".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".bmp")):
+        import mimetypes
+        media_type, _ = mimetypes.guess_type(filename)
+
     return FileResponse(
         path=file_path,
+        media_type=media_type,
         filename=filename,
         headers={"Content-Disposition": f'{disposition}; filename="{filename}"'},
     )
