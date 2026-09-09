@@ -3,29 +3,34 @@ Document Controller
 ===================
 Handles file upload, listing, serving, and ingestion status.
 Documents are always scoped to a project.
+
+Storage backend: S3 / MinIO  (no local filesystem writes).
 """
 
-import os
+import io
+import mimetypes
 from datetime import datetime, timezone
-from pathlib import Path
 
 from fastapi import BackgroundTasks, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+from fastapi.responses import StreamingResponse
 
 from models.document_model import DocumentRecord, DocumentStatus, FileType
 from models.project_model import Project
 from rag.pipeline import run_ingestion_pipeline
+from storage.exceptions import S3NotFoundError, S3StorageError, S3UploadError
+from storage.service import (
+    delete_file,
+    download_bytes,
+    generate_presigned_url,
+    upload_file,
+)
 from utils.file_validator import FileValidationError, FileValidator
 
 
-# 
+
 # Constants
-# 
 
-BASE_UPLOAD_DIR = Path(__file__).parent.parent.parent.parent/"uploads"
 
-# Map the string file_type values returned by FileValidator back to the
-# FileType enum used by DocumentRecord.
 _FILE_TYPE_MAP: dict[str, FileType] = {
     "pdf":   FileType.PDF,
     "docx":  FileType.DOCX,
@@ -37,31 +42,43 @@ _FILE_TYPE_MAP: dict[str, FileType] = {
     "image": FileType.IMAGE,
 }
 
+_MIME_MAP: dict[str, str] = {
+    "pdf":  "application/pdf",
+    "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    "doc":  "application/msword",
+    "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "xls":  "application/vnd.ms-excel",
+    "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    "txt":  "text/plain; charset=utf-8",
+    "md":   "text/markdown; charset=utf-8",
+    "csv":  "text/csv; charset=utf-8",
+    "json": "application/json; charset=utf-8",
+}
 
-def _project_upload_dir(project_id: str) -> str:
-    path = os.path.join(BASE_UPLOAD_DIR, project_id)
-    os.makedirs(path, exist_ok=True)
-    return path
+
+def _guess_mime(filename: str) -> str:
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    if ext in _MIME_MAP:
+        return _MIME_MAP[ext]
+    guessed, _ = mimetypes.guess_type(filename)
+    return guessed or "application/octet-stream"
 
 
-# 
+
 # Upload
-# 
+
 
 async def upload_docs(
     project_id: str,
     file: UploadFile,
     background_tasks: BackgroundTasks,
 ):
-    # Validate project exists
     project = await Project.get(project_id)
     if not project:
         raise HTTPException(status_code=404, detail="Project not found.")
 
-    # Read content into memory first so we can validate before touching disk.
     content = await file.read()
 
-    # Run all validation checks. Raises FileValidationError on any failure.
     try:
         result = FileValidator.validate(
             content=content,
@@ -79,32 +96,33 @@ async def upload_docs(
         )
 
     file_type = _FILE_TYPE_MAP.get(result.file_type, FileType.OTHER)
-    upload_dir = _project_upload_dir(project_id)
-    file_path = os.path.join(upload_dir, file.filename)
 
-    # Write validated content to disk
-    with open(file_path, "wb") as f:
-        f.write(content)
+    try:
+        s3_key = upload_file(
+            content=content,
+            project_id=project_id,
+            filename=file.filename,
+            content_type=result.mime_type,
+        )
+    except S3UploadError as exc:
+        raise HTTPException(status_code=500, detail=f"File storage failed: {exc}")
 
-    # Create DocumentRecord in MongoDB
     doc_record = DocumentRecord(
         project_id=project_id,
         filename=file.filename,
         original_name=file.filename,
         file_type=file_type,
         file_size=result.file_size,
-        storage_path=file_path,
+        storage_path=s3_key,
         mime_type=result.mime_type,
         processing_status=DocumentStatus.PENDING,
     )
     await doc_record.insert()
 
-    # Update project file count
     project.total_files += 1
     project.updated_at = datetime.now(timezone.utc)
     await project.save()
 
-    # Trigger RAG ingestion as a background task
     background_tasks.add_task(run_ingestion_pipeline, str(doc_record.id))
 
     return {
@@ -112,22 +130,22 @@ async def upload_docs(
         "filename": file.filename,
         "file_type": file_type,
         "status": DocumentStatus.PENDING,
-        "message": "File uploaded. Ingestion pipeline started.",
+        "message": "File uploaded to S3. Ingestion pipeline started.",
     }
 
 
-# 
+
 # List
-# 
+
 
 async def list_documents(project_id: str):
     docs = await DocumentRecord.find(DocumentRecord.project_id == project_id).to_list()
     return docs
 
 
-# 
+
 # Status
-# 
+
 
 async def get_document_status(document_id: str):
     doc = await DocumentRecord.get(document_id)
@@ -142,61 +160,103 @@ async def get_document_status(document_id: str):
     }
 
 
-# 
-# Serve
-# 
+
+# Serve  — streams file content through the backend (no redirect)
+
 
 async def serve_document(project_id: str, filename: str, download: bool = False):
-    file_path = os.path.join(BASE_UPLOAD_DIR, project_id, filename)
-    if not os.path.isfile(file_path):
+    """
+    Download file bytes from S3 and stream them back to the client.
+    No redirect — the backend acts as a transparent proxy so the browser
+    never needs to talk to MinIO directly (avoids CORS issues).
+    """
+    doc = await DocumentRecord.find_one(
+        DocumentRecord.project_id == project_id,
+        DocumentRecord.filename == filename,
+    )
+    if not doc:
         raise HTTPException(status_code=404, detail="Document not found.")
 
+    try:
+        data = download_bytes(doc.storage_path)
+    except S3NotFoundError:
+        raise HTTPException(status_code=404, detail="File not found in storage.")
+    except S3StorageError as exc:
+        raise HTTPException(status_code=500, detail=f"Could not retrieve file: {exc}")
+
+    media_type = _guess_mime(filename)
     disposition = "attachment" if download else "inline"
+    headers = {
+        "Content-Disposition": f'{disposition}; filename="{filename}"',
+        "Content-Length": str(len(data)),
+        "Cache-Control": "private, max-age=300",
+    }
 
-    lower_name = filename.lower()
-    media_type = None
-
-    if lower_name.endswith(".pdf"):
-        media_type = "application/pdf"
-    elif lower_name.endswith(".docx"):
-        media_type = "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-    elif lower_name.endswith(".doc"):
-        media_type = "application/msword"
-    elif lower_name.endswith(".xlsx"):
-        media_type = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-    elif lower_name.endswith(".xls"):
-        media_type = "application/vnd.ms-excel"
-    elif lower_name.endswith(".pptx"):
-        media_type = "application/vnd.openxmlformats-officedocument.presentationml.presentation"
-    elif lower_name.endswith((".txt", ".log")):
-        media_type = "text/plain; charset=utf-8"
-    elif lower_name.endswith(".md"):
-        media_type = "text/markdown; charset=utf-8"
-    elif lower_name.endswith(".csv"):
-        media_type = "text/csv; charset=utf-8"
-    elif lower_name.endswith(".json"):
-        media_type = "application/json; charset=utf-8"
-    elif lower_name.endswith((".png", ".jpg", ".jpeg", ".webp", ".gif", ".svg", ".bmp")):
-        import mimetypes
-        media_type, _ = mimetypes.guess_type(filename)
-
-    return FileResponse(
-        path=file_path,
+    return StreamingResponse(
+        content=io.BytesIO(data),
         media_type=media_type,
-        filename=filename,
-        headers={"Content-Disposition": f'{disposition}; filename="{filename}"'},
+        headers=headers,
     )
 
 
-# 
+
+# Presigned URL  — returns a JSON object with a time-limited S3/MinIO URL.
+# The client can embed this directly in <img src> or <iframe src> without
+# going through the backend again (good for large files like PDFs/images).
+
+
+async def get_document_presigned_url(
+    project_id: str,
+    filename: str,
+    download: bool = False,
+    expiry: int = 3600,
+):
+    """
+    Return a presigned MinIO/S3 URL as JSON so the frontend can use it
+    directly as an <img src>, <iframe src>, or anchor href.
+    """
+    doc = await DocumentRecord.find_one(
+        DocumentRecord.project_id == project_id,
+        DocumentRecord.filename == filename,
+    )
+    if not doc:
+        raise HTTPException(status_code=404, detail="Document not found.")
+
+    try:
+        if download:
+            from storage.client import s3_client, S3_BUCKET
+            url = s3_client.generate_presigned_url(
+                "get_object",
+                Params={
+                    "Bucket": S3_BUCKET,
+                    "Key": doc.storage_path,
+                    "ResponseContentDisposition": f'attachment; filename="{filename}"',
+                },
+                ExpiresIn=expiry,
+            )
+        else:
+            url = generate_presigned_url(doc.storage_path, expiry_seconds=expiry)
+    except S3StorageError as exc:
+        raise HTTPException(status_code=500, detail=f"Could not generate URL: {exc}")
+
+    return {"url": url, "filename": filename, "expires_in": expiry}
+
+
+
 # Delete
-# 
+
 
 async def delete_document(document_id: str):
     doc = await DocumentRecord.get(document_id)
     if not doc:
         raise HTTPException(status_code=404, detail="Document not found.")
-    if os.path.isfile(doc.storage_path):
-        os.remove(doc.storage_path)
+
+    try:
+        delete_file(doc.storage_path)
+    except S3NotFoundError:
+        print(f"[DOC] S3 object '{doc.storage_path}' was already missing; skipping S3 delete.")
+    except S3StorageError as exc:
+        raise HTTPException(status_code=500, detail=f"Failed to delete file from S3: {exc}")
+
     await doc.delete()
     return {"message": f"Document '{doc.filename}' deleted."}

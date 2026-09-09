@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { FileText, Eye, MoreVertical, Download, X } from 'lucide-react';
+import { FileText, Eye, MoreVertical, Download, X, Dot } from 'lucide-react';
 import { analysisApi } from '@/api';
 import type { AnalysisReport, GeneratedDocument } from '@/types';
 import { Card, CardContent } from '@/components/ui/card';
@@ -131,8 +131,8 @@ export default function GeneratedDataTab({ projectId }: { projectId: string }) {
                       {doc.doc_type.replace(/_/g, ' ')}
                     </Badge>
                   </div>
-                  <p className="text-muted-foreground mt-0.5 truncate text-xs">
-                    markdown document • {doc.content.length} characters
+                  <p className="text-muted-foreground mt-0.5 flex flex-row items-center truncate text-xs">
+                    markdown document <Dot /> {doc.content.length} characters
                   </p>
                 </div>
               </div>
@@ -180,7 +180,6 @@ export default function GeneratedDataTab({ projectId }: { projectId: string }) {
                           setMenuOpenDoc(null);
                         }}
                       >
-                        <Download className="text-muted-foreground size-3.5" />
                         <span>Export Markdown</span>
                       </button>
                       <div className="px-1 py-0.5">
@@ -261,14 +260,13 @@ export default function GeneratedDataTab({ projectId }: { projectId: string }) {
                           setModalExportOpen(false);
                         }}
                       >
-                        <Download className="text-muted-foreground size-3.5" />
-                        <span>Download Markdown</span>
+                        <span>Markdown</span>
                       </button>
                       <div className="px-1 py-0.5">
                         <DownloadPDF
                           markdown={previewDoc.content}
                           filename={`${previewDoc.title.replace(/\s+/g, '_').toLowerCase()}.pdf`}
-                          label="Download PDF"
+                          label="PDF"
                           className="text-foreground hover:bg-muted flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left text-xs font-normal shadow-none transition-colors"
                         />
                       </div>

@@ -53,10 +53,39 @@ export const documentsApi = {
   getStatus: (projectId: string, documentId: string) =>
     api.get(`/document/${projectId}/status/${documentId}`),
 
+  /**
+   * Streams the raw file bytes through the backend (backend proxies from S3).
+   * Used for DOCX (docx-preview), XLSX (SheetJS), and plain-text types.
+   * No CORS issues — the browser only talks to the FastAPI backend.
+   */
   viewUrl: (projectId: string, filename: string) =>
     api.get(`/document/${encodeURIComponent(projectId)}/view/${encodeURIComponent(filename)}`, {
       responseType: 'arraybuffer',
     }),
+
+  /**
+   * Calls the /presign/ endpoint which returns { url, filename, expires_in }.
+   * The presigned URL can be set directly as <img src> or <iframe src>
+   * because those are plain browser GETs (not XHR/fetch — no CORS preflight).
+   */
+  getPresignedUrl: async (projectId: string, filename: string): Promise<string> => {
+    const resp = await api.get<{ url: string }>(
+      `/document/${encodeURIComponent(projectId)}/presign/${encodeURIComponent(filename)}`,
+    );
+    return resp.data.url;
+  },
+
+  /**
+   * Same as getPresignedUrl but the resulting URL forces a file download
+   * (Content-Disposition: attachment is baked into the presigned URL).
+   */
+  getDownloadUrl: async (projectId: string, filename: string): Promise<string> => {
+    const resp = await api.get<{ url: string }>(
+      `/document/${encodeURIComponent(projectId)}/presign/${encodeURIComponent(filename)}`,
+      { params: { download: true } },
+    );
+    return resp.data.url;
+  },
 
   delete: (projectId: string, documentId: string) =>
     api.delete(`/document/${projectId}/delete/${documentId}`),
