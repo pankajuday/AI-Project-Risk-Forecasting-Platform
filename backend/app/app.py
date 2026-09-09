@@ -4,11 +4,17 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from config.mongodb import init_db
 from core.security import settings
+from storage.service import ensure_bucket
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await init_db()
+    # Ensure the S3/MinIO bucket exists before serving any requests
+    try:
+        ensure_bucket()
+    except Exception as exc:
+        print(f"[STARTUP] Warning: could not verify S3 bucket: {exc}")
     yield
 
 

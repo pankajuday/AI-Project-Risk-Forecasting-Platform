@@ -3,7 +3,15 @@ import { renderAsync } from 'docx-preview';
 import ExcelViewer from '@/components/DocumentViewer/ExcelViewer';
 import { MdFormatter } from '@/components/MdFormatter';
 import { documentsApi } from '@/api';
-import { Loader2, AlertCircle, FileText, Download, Copy, Check, Presentation } from 'lucide-react';
+import {
+  Loader2,
+  AlertCircle,
+  FileText,
+  Download,
+  Copy,
+  Check,
+  Presentation,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -12,35 +20,49 @@ interface ViewerProps {
   filename: string;
 }
 
+// File types that need in-browser binary parsing
+const BINARY_PARSE_EXTS = ['docx', 'doc'];
+// File types where we decode the bytes to text
+const TEXT_EXTS = ['txt', 'log', 'json', 'yaml', 'yml'];
+
 export default function Viewer({ projectId, filename }: ViewerProps) {
   const viewerRef = useRef<HTMLDivElement | null>(null);
-  const [blobUrl, setBlobUrl] = useState<string | null>(null);
-  const [rawBlob, setRawBlob] = useState<Blob | null>(null);
+
+  // Presigned URL — used for PDF, image, PPTX direct browser embed
+  const [presignedUrl, setPresignedUrl] = useState<string | null>(null);
+  // Download URL (forced attachment)
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+
+  // Binary buffer — only for DOCX rendering via docx-preview
   const [docxBuffer, setDocxBuffer] = useState<ArrayBuffer | null>(null);
   const [docxRendering, setDocxRendering] = useState<boolean>(false);
+
+  // Text content — for txt / log / json / yaml / md
   const [textContent, setTextContent] = useState<string | null>(null);
+
   const [loading, setLoading] = useState<boolean>(true);
   const [docError, setDocError] = useState<string | null>(null);
   const [copied, setCopied] = useState<boolean>(false);
 
   const ext = filename ? filename.split('.').pop()?.toLowerCase() || '' : '';
 
-  // 1. Fetch file data
+  
+  // 1. Load file data whenever filename or projectId changes
+  
   useEffect(() => {
     if (!filename || !projectId) return;
 
-    let activeUrl: string | null = null;
     let isCancelled = false;
 
-    // Reset previous states
-    setBlobUrl(null);
-    setRawBlob(null);
+    // Reset all previous state
+    setPresignedUrl(null);
+    setDownloadUrl(null);
     setDocxBuffer(null);
     setTextContent(null);
     setDocError(null);
     setLoading(true);
 
-    // Excel files handle their own loading
+    // Excel/CSV — ExcelViewer handles its own fetching
     if (ext === 'xlsx' || ext === 'xls') {
       setLoading(false);
       return;
@@ -48,55 +70,47 @@ export default function Viewer({ projectId, filename }: ViewerProps) {
 
     async function loadDocument() {
       try {
-        const resp = await documentsApi.viewUrl(projectId, filename);
-        if (isCancelled) return;
-
-        let mimeType = 'application/octet-stream';
-        if (ext === 'pdf') {
-          mimeType = 'application/pdf';
-        } else if (['png', 'jpg', 'jpeg', 'webp', 'gif', 'bmp', 'svg'].includes(ext)) {
-          mimeType = ext === 'svg' ? 'image/svg+xml' : `image/${ext === 'jpg' ? 'jpeg' : ext}`;
-        } else if (['txt', 'log', 'md', 'csv', 'json', 'yaml', 'yml'].includes(ext)) {
-          mimeType = 'text/plain; charset=utf-8';
-        } else if (ext === 'docx') {
-          mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
-        } else if (ext === 'doc') {
-          mimeType = 'application/msword';
-        } else if (ext === 'pptx') {
-          mimeType = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
-        }
-
-        const buffer =
-          resp.data instanceof ArrayBuffer ? resp.data : new Uint8Array(resp.data).buffer;
-
-        const blob = new Blob([buffer], { type: mimeType });
-        setRawBlob(blob);
-
-        // For Text & Markdown files, decode text
-        if (['txt', 'log', 'md', 'json', 'yaml', 'yml'].includes(ext)) {
-          const decoder = new TextDecoder('utf-8');
-          const text = decoder.decode(buffer);
-          setTextContent(text);
-          setLoading(false);
-          return;
-        }
-
-        // For DOCX files, store buffer for rendering
-        if (ext === 'docx' || ext === 'doc') {
+        //  DOCX / DOC: need raw binary for docx-preview 
+        if (BINARY_PARSE_EXTS.includes(ext)) {
+          const resp = await documentsApi.viewUrl(projectId, filename);
+          if (isCancelled) return;
+          const buffer =
+            resp.data instanceof ArrayBuffer
+              ? resp.data
+              : new Uint8Array(resp.data).buffer;
           setDocxBuffer(buffer);
           setLoading(false);
           return;
         }
 
-        // For PDF, Images, and other binary types, create an authenticated Blob URL
-        const url = URL.createObjectURL(blob);
-        activeUrl = url;
-        setBlobUrl(url);
+        //  Text types: fetch binary, decode to string 
+        if (TEXT_EXTS.includes(ext) || ext === 'md' || ext === 'csv') {
+          const resp = await documentsApi.viewUrl(projectId, filename);
+          if (isCancelled) return;
+          const buffer =
+            resp.data instanceof ArrayBuffer
+              ? resp.data
+              : new Uint8Array(resp.data).buffer;
+          const text = new TextDecoder('utf-8').decode(buffer);
+          setTextContent(text);
+          setLoading(false);
+          return;
+        }
+
+        //  Everything else (PDF, images, PPTX, unknown):
+        //     get presigned URL and point the browser element at it directly 
+        const [viewUrl, dlUrl] = await Promise.all([
+          documentsApi.getPresignedUrl(projectId, filename),
+          documentsApi.getDownloadUrl(projectId, filename),
+        ]);
+        if (isCancelled) return;
+        setPresignedUrl(viewUrl);
+        setDownloadUrl(dlUrl);
         setLoading(false);
       } catch (err: any) {
         console.error('Error loading document:', err);
         if (!isCancelled) {
-          setDocError(err.response?.data?.detail || 'Failed to load document content.');
+          setDocError(err?.response?.data?.detail ?? 'Failed to load document content.');
           setLoading(false);
         }
       }
@@ -106,13 +120,12 @@ export default function Viewer({ projectId, filename }: ViewerProps) {
 
     return () => {
       isCancelled = true;
-      if (activeUrl) {
-        URL.revokeObjectURL(activeUrl);
-      }
     };
   }, [filename, projectId, ext]);
 
-  // 2. Render DOCX once DOM container and buffer are ready
+  
+  // 2. Render DOCX once DOM container and buffer are both ready
+  
   useEffect(() => {
     if (!docxBuffer || !viewerRef.current) return;
 
@@ -157,16 +170,26 @@ export default function Viewer({ projectId, filename }: ViewerProps) {
     };
   }, [docxBuffer]);
 
-  const handleDownload = () => {
-    if (rawBlob) {
-      const url = URL.createObjectURL(rawBlob);
+  
+  // Handlers
+  
+  const handleDownload = async () => {
+    try {
+      // Prefer the pre-fetched download URL; fall back to fetching one now
+      let url = downloadUrl;
+      if (!url) {
+        url = await documentsApi.getDownloadUrl(projectId, filename);
+      }
       const a = document.createElement('a');
       a.href = url;
       a.download = filename;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+    } catch (err) {
+      toast.error('Failed to generate download link.');
     }
   };
 
@@ -179,14 +202,17 @@ export default function Viewer({ projectId, filename }: ViewerProps) {
     }
   };
 
+  
+  // Guards
+  
   if (!projectId || !filename) return null;
 
-  // 1. Excel spreadsheets (.xlsx, .xls) and CSV
+  // Excel spreadsheets — delegate entirely to ExcelViewer
   if (ext === 'xlsx' || ext === 'xls') {
     return <ExcelViewer projectId={projectId} filename={filename} />;
   }
 
-  // Loading state (for non-DOCX files)
+  // Loading state
   if (loading) {
     return (
       <div className="bg-background/50 text-muted-foreground flex h-full w-full items-center justify-center gap-2 text-xs">
@@ -211,13 +237,17 @@ export default function Viewer({ projectId, filename }: ViewerProps) {
     );
   }
 
-  // 2. Images (.png, .jpg, .jpeg, .gif, .webp, .svg, .bmp)
+  
+  // Renderers
+  
+
+  // 1. Images — presigned URL set directly as src (no CORS issues)
   if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'bmp', 'svg'].includes(ext)) {
     return (
       <div className="bg-background/80 flex h-full w-full items-center justify-center p-4">
-        {blobUrl ? (
+        {presignedUrl ? (
           <img
-            src={blobUrl}
+            src={presignedUrl}
             alt={filename}
             className="max-h-full max-w-full rounded-lg object-contain shadow-lg"
           />
@@ -226,7 +256,7 @@ export default function Viewer({ projectId, filename }: ViewerProps) {
     );
   }
 
-  // 3. Markdown (.md)
+  // 2. Markdown — rendered with MdFormatter
   if (ext === 'md') {
     return (
       <div className="bg-card text-foreground relative h-full w-full overflow-auto p-6 text-xs">
@@ -246,7 +276,7 @@ export default function Viewer({ projectId, filename }: ViewerProps) {
     );
   }
 
-  // 4. Plain text, logs, JSON, YAML (.txt, .log, .json, .yaml, .yml, .csv)
+  // 3. Plain text / logs / JSON / YAML / CSV
   if (['txt', 'log', 'csv', 'json', 'yaml', 'yml'].includes(ext)) {
     return (
       <div className="bg-card text-foreground relative h-full w-full overflow-auto p-6 font-mono text-xs leading-relaxed">
@@ -268,7 +298,7 @@ export default function Viewer({ projectId, filename }: ViewerProps) {
     );
   }
 
-  // 5. DOCX & Word documents (.docx, .doc)
+  // 4. DOCX / DOC — rendered in-browser via docx-preview
   if (ext === 'docx' || ext === 'doc') {
     return (
       <div className="relative h-full w-full overflow-auto bg-[#525659]">
@@ -286,7 +316,7 @@ export default function Viewer({ projectId, filename }: ViewerProps) {
     );
   }
 
-  // 6. PowerPoint presentations (.pptx)
+  // 5. PowerPoint (.pptx) — no inline renderer; show download CTA
   if (ext === 'pptx') {
     return (
       <div className="bg-muted/20 flex h-full w-full flex-col items-center justify-center p-8 text-center">
@@ -306,14 +336,14 @@ export default function Viewer({ projectId, filename }: ViewerProps) {
     );
   }
 
-  // 7. PDF preview
+  // 6. PDF — embed via presigned URL directly in <iframe>
   if (ext === 'pdf') {
     return (
       <div className="bg-muted/20 h-full w-full overflow-hidden">
-        {blobUrl ? (
+        {presignedUrl ? (
           <iframe
             title={filename}
-            src={`${blobUrl}#toolbar=1&navpanes=0`}
+            src={`${presignedUrl}#toolbar=1&navpanes=0`}
             className="h-full w-full border-none"
           />
         ) : null}
@@ -321,7 +351,7 @@ export default function Viewer({ projectId, filename }: ViewerProps) {
     );
   }
 
-  // 8. Generic Fallback for other file types
+  // 7. Generic fallback for any other binary type
   return (
     <div className="bg-muted/20 flex h-full w-full flex-col items-center justify-center p-8 text-center">
       <div className="border-border bg-card mb-4 flex size-16 items-center justify-center rounded-2xl border shadow-sm">

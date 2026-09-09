@@ -36,7 +36,7 @@ The system follows a modern distributed architecture, decoupled into a robust ba
 ###  Frontend (`frontend`)
 Built with **React** and **Vite**, the UI layer provides a rich, intuitive user experience. It handles user interactions, file uploads, and visualization of complex analytical outputs.
 *   **Dependencies:** `react-markdown`, `papaparse`, `html2pdf.js`, etc.
-*   **API Endpoint:** Communicates with the backend API at `http://127.0.0.1:3000/v1/api`.
+*   **API Endpoint:** Communicates with the backend API at `http://127.0.0.1:3000`.
 
 ###  Backend (`backend`)
 The core intelligence layer, built with **Python** (using libraries like LangChain, Beanie, FastAPI).
@@ -71,22 +71,45 @@ The backend handles data ingestion, AI processing, and data persistence.
 
     > **Example `.env` file: for backend**  
     ```bash
+    # MOngodb Configurations
     MONGODB_URI=mongodb://localhost:27017
     DB_NAME=ai_intelligence_risk_advisor
-    HF_TOKEN=your_huggingface_token_here 
-    GOOGLE_API_KEY=your_google_api_key_here
-    LLM_MODEL=gemini-3.5-flash-lite # you can change this to your preferred LLM model
-    NVIDIA_API_KEY=your_nvidia_api_key_here # optional, only if using NVIDIA APIs
+
+    # Docling Configurations
+    HF_TOKEN=add-hf-token
     DOCLING_SERVE_ALLOW_EXTERNAL_PLUGINS=true
     TORCH_COMPILE_DISABLE=1
     TORCHINDUCTOR_DISABLE=1
+
+
+    # LLM Configurations
+    GOOGLE_API_KEY=add-gemini-api-key
+    EMBED_MODEL=gemini-embedding-001
+    LLM_MODEL=gemini-3.5-flash
+    NVIDIA_API_KEY= #optional, if you use nvidia model then add key
+
+    #Qdrant End-Poin
     QDRANT_URL=http://localhost:6333
+
+    # Backend Configurations
     BACKEND_HOST=127.0.0.1
     BACKEND_PORT=3000
     BACKEND_RELOAD=True
-    EMBED_MODEL=gemini-embedding-001
+    API_ORIGIN=http://127.0.0.1:5173
     MAX_UPLOAD_SIZE_MB=50
-    API_ORIGIN=http://localhost:5173
+
+    # JWT Configurations
+    JWT_SECRET_KEY=add-32-bit-secret-key
+    JWT_ALGORITHM=HS256
+    ACCESS_TOKEN_EXPIRE_MINUTES=10080
+
+
+    # S3 Configurations
+    S3_ENDPOINT=http://127.0.0.1:9000
+    S3_ACCESS_KEY=minioadmin
+    S3_SECRET_KEY=your-password
+    S3_REGION=us-east-1
+    S3_BUCKET=documents
     ```
 
 4.  **Run the Server:**
@@ -114,7 +137,7 @@ The frontend provides the user interface for interaction.
 
     > **Example `.env` file: for frontend**  
     ```bash
-    VITE_API_URL=http://127.0.0.1:3000/v1/api
+    VITE_API_URL=http://127.0.0.1:3000
     ```
 
 4.  **Run the Development Server:**
@@ -122,6 +145,45 @@ The frontend provides the user interface for interaction.
     npm run dev
     ```
     *The UI should open in your browser at `http://localhost:5173` (or similar port).*
+
+### 3. Docker `(.env)`
+
+1.  **Navigate to the docker directory:**
+    ```bash
+    cd docker
+    ```
+
+2.  **Set Environment Variables:**
+    Create or update the `.env` file in the `docker` directory with the required MinIO root credentials.
+
+    > **Example `docker/.env` file:**
+    ```bash
+    MINIO_ROOT_USER=admin
+    MINIO_ROOT_PASSWORD=password123
+    ```
+
+3.  **Start Docker services:**
+    From the `docker` directory, run:
+    ```bash
+    docker compose up -d
+    ```
+
+4.  **Verify containers are running:**
+    ```bash
+    docker compose ps
+    ```
+
+5.  **Check service logs (optional):**
+    ```bash
+    docker compose logs -f
+    ```
+
+6.  **Stop Docker services:**
+    ```bash
+    docker compose down
+    ```
+
+> If your Docker installation uses the older command format, replace `docker compose` with `docker-compose`.
 
 ##  Project Structure
 [View Diagram ![](https://app.eraser.io/workspace/p9tkWhTL1ysH2TttsEm3/preview?diagram=hDr5Dfrq_i9HMusRR7pd&type=embed)](https://app.eraser.io/workspace/p9tkWhTL1ysH2TttsEm3?diagram=hDr5Dfrq_i9HMusRR7pd)

@@ -7,23 +7,23 @@ from langchain_google_genai import GoogleGenerativeAIEmbeddings
 from langchain_nvidia_ai_endpoints import NVIDIAEmbeddings
 from langchain_core.documents import Document
 
-# nvidia_api_key = os.getenv("NVIDIA_API_KEY")
+nvidia_api_key = os.getenv("NVIDIA_API_KEY")
 
-# embedding_model = NVIDIAEmbeddings(
-#     model="nvidia/nemotron-3-embed-1b",
-#     api_key=nvidia_api_key,
-#     truncate="NONE",
-# )
-
-gemini_api_key = os.getenv("GOOGLE_API_KEY")
-EMBEDDING_MODEL = os.getenv("EMBED_MODEL")
-
-embedding_model = GoogleGenerativeAIEmbeddings(
-    model=EMBEDDING_MODEL,
-    google_api_key=gemini_api_key,
-    task_type="SEMANTIC_SIMILARITY",
-     output_dimensionality=2048
+embedding_model = NVIDIAEmbeddings(
+    model="nvidia/nemotron-3-embed-1b",
+    api_key=nvidia_api_key,
+    truncate="NONE",
 )
+
+# gemini_api_key = os.getenv("GOOGLE_API_KEY")
+# EMBEDDING_MODEL = os.getenv("EMBED_MODEL")
+
+# embedding_model = GoogleGenerativeAIEmbeddings(
+#     model=EMBEDDING_MODEL,
+#     google_api_key=gemini_api_key,
+#     task_type="SEMANTIC_SIMILARITY",
+#      output_dimensionality=2048
+# )
 
 async def embed_documents(texts: List[str]) -> List[List[float]]:
     """Embed a list of text strings into vectors."""

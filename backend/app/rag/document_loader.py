@@ -2,47 +2,43 @@
 from dotenv import load_dotenv
 load_dotenv()
 
-import os
 from pathlib import Path
 from typing import Optional, List
-from langchain_core.documents import Document # The standard output type
+from langchain_core.documents import Document
 from langchain_docling import DoclingLoader
 from langchain_docling.loader import ExportType
 
 
-
 class DocumentLoader:
     """
-    A utility class to load documents from various file types 
-    using LangChain's document loaders.
+    Loads documents from a local file path using Docling via LangChain.
+    Expects a fully-resolved, absolute path to a temporary file downloaded
+    from S3 by the ingestion pipeline.
     """
-    
+
     @staticmethod
     def load_document(file_path: str) -> Optional[List[Document]]:
         """
-        Loads a document by inspecting its file extension and using 
-        the appropriate LangChain loader.
-        
+        Load a document by its absolute file path.
+
         Args:
-            file_path: The full path to the document file.
-        
+            file_path: Absolute path to the document file (temp file from S3).
+
         Returns:
             A list of LangChain Document objects if successful, otherwise None.
         """
-        path = Path(__file__).parent.parent.parent.parent/file_path
+        path = Path(file_path)
 
         if not path.exists():
-            print(f"Error: File not found at path: {file_path}")
+            print(f"[LOADER] Error: File not found at path: {file_path}")
             return None
 
         extension = path.suffix.lower()
         print(f"\n[LOADER] Detecting document type: {extension}...")
 
         try:
-            loader = DoclingLoader(file_path=path,export_type=ExportType.MARKDOWN)
-            
+            loader = DoclingLoader(file_path=str(path), export_type=ExportType.MARKDOWN)
             documents = loader.load()
-            
             print(f"[LOADER] Successfully loaded {len(documents)} document(s).")
             return documents
 
@@ -50,4 +46,3 @@ class DocumentLoader:
             print(f"[LOADER] FATAL ERROR during loading process for {extension}: {e}")
             print("   Check if the document is corrupted or if necessary dependencies are installed.")
             return None
-

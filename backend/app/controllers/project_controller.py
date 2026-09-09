@@ -14,6 +14,7 @@ from beanie.operators import In
 from models.project_model import Project, CreateProject, ProjectStatus
 from config.qdrant import delete_collection
 from models.user_model import User
+from storage.service import delete_project_files
 
 
 #  Create 
@@ -82,11 +83,18 @@ async def delete_project(project_id: str, current_user: Optional[User] = None) -
     if not project:
         raise HTTPException(status_code=404, detail="Project not found.")
 
-    # Also purge Qdrant collection
+    # Purge Qdrant vector collection
     try:
         delete_collection(project_id)
     except Exception as e:
         print(f"[PROJECT] Warning: could not delete Qdrant collection: {e}")
+
+    # Purge all S3 / MinIO files for this project
+    try:
+        deleted_count = delete_project_files(project_id)
+        print(f"[PROJECT] Deleted {deleted_count} S3 object(s) for project '{project_id}'")
+    except Exception as e:
+        print(f"[PROJECT] Warning: could not delete S3 files: {e}")
 
     await project.delete()
 
