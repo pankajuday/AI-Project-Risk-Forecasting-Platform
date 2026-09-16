@@ -1,7 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router';
-import { Plus, ChevronLeft, UploadCloud, FileText, X, Loader2 } from 'lucide-react';
-import { projectsApi, documentsApi } from '@/api';
+import { Plus, ChevronLeft, Loader2 } from 'lucide-react';
+import { projectsApi } from '@/api';
 import {
   Card,
   CardHeader,
@@ -20,51 +20,9 @@ export default function CreateProject() {
   const { isAuthenticated, openAuthModal } = useAuth();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [files, setFiles] = useState<File[]>([]);
-  const [isDragging, setIsDragging] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
-
-  // Handle Drag Events
-  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setIsDragging(false);
-
-    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const droppedFiles = Array.from(e.dataTransfer.files);
-      setFiles(prev => [...prev, ...droppedFiles]);
-      e.dataTransfer.clearData();
-    }
-  };
-
-  // Handle Manual File Selection via Browser Dialog
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const selectedFiles = Array.from(e.target.files);
-      setFiles(prev => [...prev, ...selectedFiles]);
-      e.target.value = '';
-    }
-  };
-
-  // Remove a selected file
-  const removeFile = (index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
-  };
 
   // Real API Submit Handler
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,13 +42,8 @@ export default function CreateProject() {
       const res = await projectsApi.create({ name, description });
       const newProjectId = res.data.id || (res.data as any)._id;
 
-      // 2. Upload attached documents if any were dropped/selected
-      if (files.length > 0) {
-        await Promise.all(files.map(file => documentsApi.upload(newProjectId, file)));
-      }
-
       toast.success('Project created successfully!');
-      // 3. Navigate to the project detail view
+      // 2. Navigate to the project detail view
       navigate(`/projects/${newProjectId}`);
     } catch (error: any) {
       console.error(error);
@@ -159,74 +112,6 @@ export default function CreateProject() {
               />
             </div>
 
-            {/* Drag and Drop Upload Zone */}
-            <div className="space-y-2">
-              <label className="text-foreground text-xs font-semibold">Project Documents</label>
-
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleFileChange}
-                multiple
-                className="hidden"
-                accept=".pdf,.docx,.txt,.csv"
-              />
-
-              <div
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-                onClick={() => fileInputRef.current?.click()}
-                className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border-2 border-dashed p-6 text-center transition-all ${
-                  isDragging
-                    ? 'border-foreground bg-muted'
-                    : 'border-border bg-muted/30 hover:border-foreground/40 hover:bg-muted/60'
-                }`}
-              >
-                <div className="border-border bg-background text-foreground mb-2 rounded-full border p-2.5 shadow-xs">
-                  <UploadCloud size={20} />
-                </div>
-                <p className="text-foreground text-xs font-semibold">
-                  Click to upload{' '}
-                  <span className="text-muted-foreground font-normal">or drag & drop</span>
-                </p>
-                <p className="text-muted-foreground mt-1 text-[11px]">
-                  PDF, DOCX, TXT, CSV (Max 10MB per file)
-                </p>
-              </div>
-
-              {/* Uploaded Files List */}
-              {files.length > 0 && (
-                <div className="mt-3 space-y-2">
-                  {files.map((file, idx) => (
-                    <div
-                      key={idx}
-                      className="border-border bg-muted/40 flex items-center justify-between rounded-md border px-3 py-2 text-xs"
-                    >
-                      <div className="flex min-w-0 items-center gap-2 truncate">
-                        <FileText size={14} className="text-muted-foreground shrink-0" />
-                        <span className="text-foreground truncate font-medium">{file.name}</span>
-                        <span className="text-muted-foreground shrink-0 text-[10px]">
-                          ({(file.size / (1024 * 1024)).toFixed(2)} MB)
-                        </span>
-                      </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon"
-                        onClick={e => {
-                          e.stopPropagation();
-                          removeFile(idx);
-                        }}
-                        className="text-muted-foreground hover:text-destructive h-6 w-6 shrink-0"
-                      >
-                        <X size={13} />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
           </CardContent>
 
           <CardFooter className="border-border flex justify-end gap-2 border-t pt-4">
