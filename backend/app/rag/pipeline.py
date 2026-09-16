@@ -19,6 +19,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from models.document_model import DocumentRecord, DocumentStatus
+from models.project_model import Project
 from rag.document_loader import DocumentLoader
 from rag.text_processor import TextProcessor
 from config.qdrant import get_vector_store
@@ -85,6 +86,14 @@ async def run_ingestion_pipeline(document_id: str) -> None:
         doc_record.chunk_count = len(chunks)
         doc_record.updated_at = datetime.now(timezone.utc)
         await doc_record.save()
+
+        #  8. Update project total_chunks counter 
+        project = await Project.get(doc_record.project_id)
+        if project is not None:
+            project.total_chunks += len(chunks)
+            project.updated_at = datetime.now(timezone.utc)
+            await project.save()
+            print(f"[PIPELINE] Project '{project.id}' total_chunks → {project.total_chunks}")
 
         print(f"[PIPELINE] ✓ Ingestion complete for '{doc_record.filename}' "
               f"({len(chunks)} chunks stored).")
