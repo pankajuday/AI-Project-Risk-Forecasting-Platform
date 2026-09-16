@@ -16,7 +16,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage
 from pydantic import BaseModel, TypeAdapter
 from config.qdrant import get_vector_store
-from models.report_model import RiskItem, RiskCategory, RiskSeverity
+from models.report_model import RiskItem, RiskCategory, RiskSeverity, AnalysisReport, AnalysisStatus
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 LLM_MODEL = os.getenv("LLM_MODEL")
@@ -154,6 +154,16 @@ async def risk_node(state: dict) -> dict:
     print(f"[GRAPH] > risk_node — project: {project_id}")
 
     try:
+        # Persist current pipeline step for frontend progress
+        try:
+            report = await AnalysisReport.find_one(AnalysisReport.project_id == project_id)
+            if report:
+                report.pipeline_step = "risk_node"
+                report.status = AnalysisStatus.RUNNING
+                await report.save()
+        except Exception:
+            pass
+
         risks = await run_risk_agent(project_id)
         return {
             "risks": risks,

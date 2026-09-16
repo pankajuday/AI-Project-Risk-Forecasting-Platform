@@ -15,7 +15,7 @@ load_dotenv()
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import HumanMessage, SystemMessage
 from config.qdrant import get_vector_store
-from models.report_model import ScopeOutput
+from models.report_model import ScopeOutput, AnalysisReport, AnalysisStatus
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
 LLM_MODEL = os.getenv("LLM_MODEL")
@@ -128,6 +128,16 @@ async def scope_node(state: dict) -> dict:
     print(f"[GRAPH] scope_node — project: {project_id}")
 
     try:
+        # Persist current pipeline step so the frontend can poll progress
+        try:
+            report = await AnalysisReport.find_one(AnalysisReport.project_id == project_id)
+            if report:
+                report.pipeline_step = "scope_node"
+                report.status = AnalysisStatus.RUNNING
+                await report.save()
+        except Exception as _:
+            pass
+
         scope = await run_scope_agent(project_id)
         return {
             "scope": scope,

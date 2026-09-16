@@ -28,6 +28,7 @@ from models.report_model import (
     GeneratedDocument,
     RiskItem,
     ScopeOutput,
+    AnalysisStatus,
 )
 
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
@@ -275,6 +276,16 @@ async def doc_audit_node(state: dict) -> dict:
     project_id = state["project_id"]
     print(f"[GRAPH] > doc_audit_node — project: {project_id}")
 
+    # Persist current pipeline step
+    try:
+        report = await AnalysisReport.find_one(AnalysisReport.project_id == project_id)
+        if report:
+            report.pipeline_step = "doc_audit_node"
+            report.status = AnalysisStatus.RUNNING
+            await report.save()
+    except Exception:
+        pass
+
     existing: list[str] = []
     try:
         report = await AnalysisReport.find_one(AnalysisReport.project_id == project_id)
@@ -308,6 +319,16 @@ async def doc_gen_node(state: dict) -> dict:
     missing = state.get("missing_doc_types") or []
     scope: ScopeOutput | None = state.get("scope")
     risks: list[RiskItem] = state.get("risks") or []
+
+    # Persist current pipeline step
+    try:
+        report = await AnalysisReport.find_one(AnalysisReport.project_id == project_id)
+        if report:
+            report.pipeline_step = "doc_gen_node"
+            report.status = AnalysisStatus.RUNNING
+            await report.save()
+    except Exception:
+        pass
 
     print(f"[GRAPH] > doc_gen_node — generating {len(missing)} missing doc(s): {missing}")
 
@@ -355,6 +376,17 @@ async def skip_gen_node(state: dict) -> dict:
     `state` is typed as PipelineState at runtime (from agents.pipeline_state).
     Logs a message and passes state through unchanged.
     """
+    # Persist current pipeline step
+    project_id = state.get("project_id")
+    try:
+        report = await AnalysisReport.find_one(AnalysisReport.project_id == project_id)
+        if report:
+            report.pipeline_step = "skip_gen_node"
+            report.status = AnalysisStatus.RUNNING
+            await report.save()
+    except Exception:
+        pass
+
     existing = state.get("existing_doc_types") or []
     msg = f"skip_gen_node: all {len(existing)} documents already exist — skipping generation."
     print(f"[GRAPH] {msg}")

@@ -11,7 +11,15 @@ import os
 from dotenv import load_dotenv
 load_dotenv()
 
-from models.report_model import ScopeOutput, RiskItem, RiskSeverity, RiskCategory, HealthBreakdown
+from models.report_model import (
+    ScopeOutput,
+    RiskItem,
+    RiskSeverity,
+    RiskCategory,
+    HealthBreakdown,
+    AnalysisReport,
+    AnalysisStatus,
+)
 
 
 def compute_health_score(
@@ -98,6 +106,17 @@ async def health_node(state: dict) -> dict:
     Returns only the keys it mutates.
     """
     print(f"[GRAPH] > health_node — project: {state['project_id']}")
+
+    # Persist current pipeline step
+    project_id = state.get("project_id")
+    try:
+        report = await AnalysisReport.find_one(AnalysisReport.project_id == project_id)
+        if report:
+            report.pipeline_step = "health_node"
+            report.status = AnalysisStatus.RUNNING
+            await report.save()
+    except Exception:
+        pass
 
     scope = state.get("scope")
     risks = state.get("risks") or []
