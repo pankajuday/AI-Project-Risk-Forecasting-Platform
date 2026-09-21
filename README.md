@@ -53,7 +53,14 @@ Please follow the setup steps for both the backend and the frontend in sequence.
 *   Node.js and npm (for the `frontend`)
 *   Python 3.10+ (for the `backend`)
 *   A local database instance (e.g., MongoDB, as indicated by the `beanie` dependency).
+> Auto setup  
+* Run command
+```bash
+python ./script/setup.py
 
+```
+
+> Manual setup  
 ###  1. Backend Setup (Python)
 
 The backend handles data ingestion, AI processing, and data persistence.
