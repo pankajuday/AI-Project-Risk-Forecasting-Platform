@@ -1,3 +1,4 @@
+name: "ai-driven-enterprise-project-intelligence-risk-management-platform"
 services:
   backend:
     build:
